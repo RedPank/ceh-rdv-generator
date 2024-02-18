@@ -1,6 +1,8 @@
 import argparse
+import ctypes
 import logging
 import os
+import tkinter
 
 from core.config import Config
 from core.ui import MainWindow
@@ -34,6 +36,12 @@ def main() -> int:
     logging.info(f'templates_path="{Config.templates_path}"')
 
     win = MainWindow()
+
+    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("VTB.ceh.ceh-rdv-generator.1_0")
+    win.iconbitmap(r"res\ceh-icon.ico")
+    image = tkinter.PhotoImage(file=r"res\ceh-icon.png")
+    win.iconphoto(True, image)
+
     win.mainloop()
 
     logging.info('STOP')

@@ -22,7 +22,6 @@ class MainWindow(tk.Tk):
 
         self.out_path = tk.StringVar(value=out_path)
         self.file_path = tk.StringVar(value=Conf.excel_file)
-        # self.source_system = tk.StringVar(value="не используется")
         self.load_mode = tk.StringVar(value="increment")
         self.author = tk.StringVar(value=author)
 
