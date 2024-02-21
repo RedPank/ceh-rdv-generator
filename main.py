@@ -2,6 +2,7 @@ import argparse
 import ctypes
 import logging
 import os
+import pathlib
 import tkinter
 
 from core.config import Config
@@ -38,8 +39,9 @@ def main() -> int:
     win = MainWindow()
 
     ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("VTB.ceh.ceh-rdv-generator.1_0")
-    win.iconbitmap(r"res\ceh-icon.ico")
-    image = tkinter.PhotoImage(file=r"res\ceh-icon.png")
+    resource_path = os.path.join(pathlib.Path(__file__).parent.resolve(), 'res')
+    win.iconbitmap(os.path.join(resource_path, "ceh-icon.ico"))
+    image = tkinter.PhotoImage(file=os.path.join(resource_path, "ceh-icon.png"))
     win.iconphoto(True, image)
 
     win.mainloop()
