@@ -63,6 +63,7 @@ class StreamData:
         # self.distribution_field = self.row_dict["distribution_field"]
         # self.comment = self.row_dict["comment"]
 
+
 def _generate_mapping_df(file_data: bytes, sheet_name: str):
     """
     Трансформирует полученные данные EXCEL в тип DataFrame.

@@ -118,10 +118,11 @@ setting_up_field_lists:
     - processed_dt
     - hdp_processed_dttm
 
-  # Список полей целевой таблицы, которые НЕ будут добавлены в секцию field_map шаблона wf.yaml
-  # Исключение полей из списка идет ДО добавления полей из секции add_field_map_ctx_list
+  # Список полей целевой таблицы, которые НЕ будут добавлены в секцию field_map шаблона wf.yaml.
+  # Исключение полей из списка идет ДО добавления полей из секции add_field_map_ctx_list.
+  # Не включать поля, которые присутствуют в теге tgt_history_field (для ODS).
   ignore_field_map_ctx_list:
-    - effective_dttm             # Не включать поля, которые присутсвуют в теге tgt_history_field (для ODS)
+    - effective_dttm
     - valid_flg
     - src_cd
     - hash_diff
@@ -133,6 +134,7 @@ setting_up_field_lists:
   # Список полей с описанием, которые БУДУТ добавлены в секцию field_map шаблона wf.yaml
   # Добавление идет после исключения (список ignore_field_map_ctx_list)
   # Если поле уже присутствует в списке полей, то будет инициирована ошибка
+  # Поле добавляется "как есть"
   add_field_map_ctx_list:
 #    deleted_flg:
 #      type: sql_expression
@@ -170,6 +172,10 @@ field_type_list:
   # Используется для контроля заполнения EXCEL.
   # Поля должны присутствовать!
   src_attr_predefined_datatype: {
+    changeid: ["string"],
+    changetimestamp: ["string"],
+    changetype: ["string"],
+    hdp_processed_dttm: ["timestamp"],
   }
 
   # Шаблон Кода источника
@@ -206,7 +212,6 @@ field_type_list:
 excel_data_definition:
   columns: {
     'Детали загрузок Src-RDV': [
-        'Mapping_ver_to',
         'Algorithm_UID',
         'SubAlgorithm_UID',
         'Src_table',
@@ -226,20 +231,18 @@ excel_data_definition:
         'Attr:nulldefault'
     ],
     'Перечень загрузок Src-RDV': [
-        mapping_ver,
-        mapping_ver_to,
-        algorithm_uid,
-        subalgorithm_uid,
-        flow_name,
-        tgt_table,
-        target_rdv_object_type,
-        src_table,
-        source_name,
-        scd_type,
-        algo_name,
-        data_filtering,
-        distribution_field,
-        comment
+        'algorithm_uid',
+        'subalgorithm_uid',
+        'flow_name',
+        'tgt_table',
+        'target_rdv_object_type',
+        'src_table',
+        'source_name',
+        'scd_type',
+        'algo_name',
+        'data_filtering',
+        'distribution_field',
+        'comment'
     ]
   }
 
