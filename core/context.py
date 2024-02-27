@@ -68,7 +68,6 @@ class TableContext:
     name: str
     src_cd: str
     field_context: list
-    # _: KW_ONLY
     schema: str = '~'
     field_ctx_list: list[FieldContext] = field(default_factory=list)
 
@@ -104,19 +103,19 @@ class SourceContext(TableContext):
     data_capture_mode: str = None
 
 
-@dataclass
-class DAPPSourceContext(SourceContext):
+# @dataclass
+# class DAPPSourceContext(SourceContext):
+#
+#     def __post_init__(self):
+#         super().__post_init__()
+#
 
-    def __post_init__(self):
-        super().__post_init__()
-
-
-@dataclass
-class DRPSourceContext(SourceContext):
-
-    def __post_init__(self):
-        super().__post_init__()
-
+# @dataclass
+# class DRPSourceContext(SourceContext):
+#
+#     def __post_init__(self):
+#         super().__post_init__()
+#
 
 @dataclass
 class TargetContext(TableContext):

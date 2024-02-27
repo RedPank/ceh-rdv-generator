@@ -162,4 +162,3 @@ def mapping_generator(
         logging.info(f'Файлы потока {base_flow_name} сформированы')
 
     logging.info('')
-    

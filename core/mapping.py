@@ -10,17 +10,21 @@ from pandas import DataFrame
 import logging
 
 from core.config import Config
-from .context import (SourceContext, TargetContext, MappingContext, DAPPSourceContext, UniContext,
+from .context import (SourceContext, TargetContext, MappingContext, UniContext,
                       HubFieldContext)
 from .exceptions import IncorrectMappingException
 
 
 class StreamData:
+    """
+    Класс представляет данные с листа 'Перечень загрузок Src-RDV' для указанной целевой таблицы.
+    Названия полей соответствуют названиям колонок EXCEL
+    """
     row: pd.DataFrame
     row_dict: dict
 
-    mapping_ver: str
-    mapping_ver_to: str
+    # mapping_ver: str
+    # mapping_ver_to: str
     algorithm_uid: str
     subalgorithm_uid: str
     flow_name: str
@@ -29,10 +33,10 @@ class StreamData:
     src_table: str
     source_name: str
     scd_type: str
-    algo_name: str
-    data_filtering: str
-    distribution_field: str
-    comment: str
+    # algo_name: str
+    # data_filtering: str
+    # distribution_field: str
+    # comment: str
 
     def __init__(self, df: pd.DataFrame, tgt_table: str):
 
@@ -179,9 +183,9 @@ class MappingMeta:
         self.mapping_list = _generate_mapping_df(file_data=byte_data, sheet_name='Перечень загрузок Src-RDV')
 
         # Список целевых таблиц. Проверяем наличие дубликатов в списке
-        self.tgt_tables_list: list[str] = self.mapping_list['tgt_table'].dropna().tolist()
+        self._tgt_tables_list: list[str] = self.mapping_list['tgt_table'].dropna().tolist()
         visited: set = set()
-        for tbl in self.tgt_tables_list:
+        for tbl in self._tgt_tables_list:
             if tbl in visited:
                 logging.error(f"В таблице 'Перечень загрузок Src-RDV' "
                               f"присутствуют повторяющиеся названия таблиц: {tbl}")
@@ -196,7 +200,7 @@ class MappingMeta:
         """
         Возвращает список целевых таблиц (из колонки 'tgt_table')
         """
-        return self.tgt_tables_list
+        return self._tgt_tables_list
 
     def get_mapping_by_table(self, tgt_table: str) -> pd.DataFrame:
         """
@@ -589,14 +593,7 @@ class MartMapping:
         # Список полей таблицы - источника
         src_field_ctx = self._get_src_table_fields()
 
-        # __src_ctx_cls = {
-        #     "DAPP": DAPPSourceContext,
-        #     "DRP": DRPSourceContext
-        # }
-
-        # Пока убрали "контекстно-зависимый код" ...
-        # self.src_ctx = __src_ctx_cls[self.source_system](
-        self.src_ctx = DAPPSourceContext(
+        self.src_ctx = SourceContext(
             name=src_table_name,
             src_cd=self.src_cd,
             field_context=src_field_ctx,
