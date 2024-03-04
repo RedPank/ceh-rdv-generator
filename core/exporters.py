@@ -191,7 +191,7 @@ class TargetObjectExporter:
 
             # Ресурс БК-схемы
             template = self.env.get_template(self.template_bk_json)
-            output = template.render(hub=hub, tags=tags)
+            output = template.render(hub=hub, values=values, tags=tags)
             file_name: str = os.path.join(path, f'ceh.{hub.hub_name}.{hub.bk_schema_name}.json')
             with open(file_name, "w", encoding="utf-8") as f:
                 f.write(output)

@@ -103,20 +103,6 @@ class SourceContext(TableContext):
     data_capture_mode: str = None
 
 
-# @dataclass
-# class DAPPSourceContext(SourceContext):
-#
-#     def __post_init__(self):
-#         super().__post_init__()
-#
-
-# @dataclass
-# class DRPSourceContext(SourceContext):
-#
-#     def __post_init__(self):
-#         super().__post_init__()
-#
-
 @dataclass
 class TargetContext(TableContext):
     hub_context: list = field(default_factory=list)
@@ -186,9 +172,11 @@ class UniContext:
     hdp_processed: str = None
     # Округление даты
     hdp_processed_conversion: str | None
+    # Имя поля историчности в целевой таблице
+    tgt_history_field: str | None
 
     def __init__(self, source: str, schema: str, table_name: str, src_cd: str, hdp_processed: str,
-                 hdp_processed_conversion: str):
+                 hdp_processed_conversion: str, tgt_history_field: str):
         self.source = source.lower()
         self.schema = schema.lower()
         self.table_name = table_name.lower()
@@ -198,6 +186,7 @@ class UniContext:
         self.actual_dttm_name = f"{self.src_cd}_actual_dttm"
         self.hdp_processed = hdp_processed
         self.hdp_processed_conversion = hdp_processed_conversion
+        self.tgt_history_field = tgt_history_field
 
 
 @dataclass
@@ -238,6 +227,12 @@ class MappingContext:
                     field_map = FieldMapContext(tgt_field=row[1],
                                                 type='sql_expression',
                                                 value=row[0] + '::timestamp',
+                                                field_type=row[2].upper()
+                                                )
+                elif row[3] == 'string' and row[2] == 'date':
+                    field_map = FieldMapContext(tgt_field=row[1],
+                                                type='sql_expression',
+                                                value=row[0] + '::date',
                                                 field_type=row[2].upper()
                                                 )
                 else:

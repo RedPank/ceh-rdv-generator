@@ -1,46 +1,48 @@
-# Для источника ods и схожих с ним
-
 ########################################################################################################################
 # Файл настроек программы ceh-rdv-generator
 ########################################################################################################################
 
-# Кодировку файла не менять !!!
+# Кодировку файла не менять  
 encoding: 'utf-8'
 
 # Ссылки/Якоря #########################################################################################################
+# Во 2-ой строке отступ обязателен !!!
 
 # Автор проекта. Редактировать здесь.
-#  !!! Во 2 строке отступ обязателен !!!
 anchor_author: &author
   "Автор"
-
 # Команда проекта - редактировать здесь
 anchor_team: &team
   "zi21"
-
-# СУБО - Слой устойчивых бизнес операций. Редактировать здесь
+# СУБО - Слой устойчивых бизнес операций. Редактировать здесь.
 anchor_subo: &subo
-  "1375"
-
-# Полное название СУБО.
+  "1376"
+# Полное название СУБО. Редактировать здесь.
 anchor_subo_name: &subo_name
   ""
-
 # Предметная область. Редактировать здесь
 anchor_area: &area
-  "MSCL"
+  "application"
+########################################################################################################################
+
+
+# Список потоков в виде шаблонов regular expression, ###################################################################
+# которые будут обрабатываться (браться из EXCEL) 
+# ".+" - все потоки
+# Если задается полное имя потока, то в начале ставится знак "^", а в конце - "$"
+# Иначе поиск будет вестись по совпадению любой части имени с шаблоном
+wf_templates_list:
+#  - ".+"
+  - "^wf_app_mssa_dapp_rdv_mart_application_product$"
+#  - "^wf_app_mssa_dapp_rdv_mart_application_dictionary$"
+#  - "^wf_app_mssa_dapp_rdv_mart_product_additional_service$"
+#  - "^wf_app_mssa_dapp_rdv_mart_application_product_insurance$"
 
 ########################################################################################################################
 
-author: *author
-team: *team
-subo: *subo
-subo_name: *subo_name
-area: *area
-
 # Ссылка на каталог с шаблонами
 # По умолчанию шаблоны берутся из каталога templates, который находится "рядом" с main.py
-templates: E:\\GitHub\\ceh-rdv-generator\\templates.ods 
+templates: E:\\GitHub\\ceh-rdv-generator\\templates.DAPP 
 
 # Программа для отображения log-файла. Если строка содержит пробелы, то заключить в двойные кавычки.
 # Работу на linux не проверял ...
@@ -50,14 +52,23 @@ log_viewer: '"C:\Program Files\Notepad++\notepad++.exe"'
 # Имя файла необходимо заключить в двойные кавычки (возможны отличии в разных OS)
 log_file_cmd: '-ro "{log_file}"'
 # Файл журнала
-log_file: "generator.log"
+log_file: "E:\\Projects\\SUBO_1376\\generator.log"
 
 # Каталог, в котором будут создаваться подкаталоги потоков
 # Если задан не "абсолютный" путь, то каталог создается "рядом" с файлом main.py
-out_path: "E:\\Projects\\SUBO_1375\\xxx"
+out_path: "E:\\Projects\\SUBO_1376"
 
 # Имя файла подставляется в диалог выбора
-excel_file: "E:\\Projects\\SUBO_1375\\Маппинг_ЦЕХ_RDV_OBLIGATION_MSCL_v1.0_.xlsx"
+excel_file: "E:\\Projects\\SUBO_1376\\Маппинг_ЦЕХ_RDV_MSSA_v6.0.xlsx"
+
+########################################################################################################################
+
+
+author: *author
+team: *team
+subo: *subo
+subo_name: *subo_name
+area: *area
 
 # Набор строк для секции metadata.tags в файлах потока cf/wf
 # Можно изменить порядок строк, добавить свою строку без переменных
@@ -70,7 +81,7 @@ tags:
   - "prv:{{ tags.prv }}"
   - "tgt:{{ tags.tgt }}"
   - "tgt-tbl:{{ tags.tgt_tbl }}"
-  - "rls:текущий"
+  - "rls:51"
   - "cf:{{ tags.cf_flow }}"
   - "wf:{{ tags.wf_flow }}"
   - subo: *subo
@@ -83,6 +94,23 @@ resource_tags:
   - team: *team
   - subo: *subo
   - area: *area
+
+### Шаблоны для проверки имен/названий #################################################################################
+
+# Шаблон Кода источника
+src_cd_regexp: "^='([A-Z_]+)'$"
+# Шаблон названия поля в таблице-источнике
+src_attr_name_regexp: "^[a-zA-Z][a-zA-Z0-9_\\$]*$"
+# Шаблон названия поля в целевой таблице
+tgt_attr_name_regexp: "^[a-zA-Z][a-zA-Z0-9_]{0,61}$"
+# Шаблон названия таблицы-источника
+src_table_name_regexp: "^[a-zA-Z][a-zA-Z0-9_]*\\.[a-zA-Z][a-zA-Z0-9_]*$"
+# Шаблон названия целевой-таблицы
+tgt_table_name_regexp: "^[a-z][a-z0-9_]*\\.[a-z][a-z0-9_]*$"
+# Шаблон названия БК-схемы
+bk_schema_regexp: "^[a-zA-Z][a-zA-Z0-9_-]*$"
+
+########################################################################################################################
 
 # Настройка списков полей
 # Раздел должен присутствовать!!!
@@ -122,7 +150,7 @@ setting_up_field_lists:
   # Исключение полей из списка идет ДО добавления полей из секции add_field_map_ctx_list.
   # Не включать поля, которые присутствуют в теге tgt_history_field (для ODS).
   ignore_field_map_ctx_list:
-    - effective_dttm
+    #- effective_dttm
     - valid_flg
     - src_cd
     - hash_diff
@@ -138,16 +166,16 @@ setting_up_field_lists:
   add_field_map_ctx_list:
 #    deleted_flg:
 #      type: sql_expression
-#      value: decode(upper(changetype), 'DELETE', true, false)
+#      value: decode(upper(op_type), 'DELETE', true, false)
 #      field_type: BOOLEAN
 
   # Определение поля даты источнка по которому будет выполняться фильтрация новых записей 
-  # Имя параметра "hdp_processed%" не несет никакого смысла ... Это просто имя ...
-  hdp_processed: ods$processed_dt
+  # Шаблон wf.yaml
+  hdp_processed: commit_ts
   # Отсечение даты: microseconds,milliseconds,second,minute,hour,day,week,month,quarter,year,decade,,centurymillennium
   hdp_processed_conversion: second
  
-  # Поле историчности в целевой таблице	
+  # Поле "историчности" в целевой таблице (поле history_field в шаблоне mart.yaml)	 
   tgt_history_field: effective_dttm
 
 # Настройки состава/типа/названия полей
@@ -160,7 +188,7 @@ field_type_list:
     #effective_from_date: ["date", "null"],
     #effective_to_date: ["date", "null"],
     effective_dttm: ["timestamp", "not null"],
-    hash_diff: [ "char(32)", "null" ],
+    hash_diff: [ "char(32)", "not null" ],
     src_cd: [ "text", "not null" ],
     version_id: [ "bigint", "not null" ],
     deleted_flg: [ "boolean", "not null" ],
@@ -172,20 +200,12 @@ field_type_list:
   # Используется для контроля заполнения EXCEL.
   # Поля должны присутствовать!
   src_attr_predefined_datatype: {
-    changeid: ["string"],
-    changetimestamp: ["string"],
-    changetype: ["string"],
-    hdp_processed_dttm: ["timestamp"],
+    #changeid: ["string"],
+    #changetimestamp: ["string"],
+    #changetype: ["string"],
+    #hdp_processed_dttm: ["timestamp"],
+    processed_dt: ["timestamp"], 
   }
-
-  # Шаблон Кода источника
-  src_cd_regexp: "^='([A-Z_]+)'$"
-
-  # Шаблон названия поля в таблице-источнике
-  src_attr_name_regexp: "^[a-zA-Z][a-zA-Z0-9_\\$]*$"
-
-  # Шаблон названия поля в целевой таблице
-  tgt_attr_name_regexp: "^[a-zA-Z][a-zA-Z0-9_]{0,61}$"
 
   # Список возможных значений колонки "Src_attr_datatype"
   # Внимание! Фрейм поддерживает ограниченной количество типов.
@@ -245,23 +265,4 @@ excel_data_definition:
         'comment'
     ]
   }
-
-# Шаблон названия таблицы-источника
-src_table_name_regexp: "^[a-zA-Z][a-zA-Z0-9_]*\\.[a-zA-Z][a-zA-Z0-9_]*$"
-# Шаблон названия целевой-таблицы
-tgt_table_name_regexp: "^[a-z][a-z0-9_]*\\.[a-z][a-z0-9_]*$"
-
-
-# Список потоков в виде шаблонов (в виде regular expression), которые будут обрабатываться (браться из EXCEL)
-# ".+" - все потоки
-# Если задается полное имя потока, то в начале ставится знак "^", а в конце - "$"
-# Иначе поиск будет вестись по совпадению любой части имени с шаблоном
-# Корректность имен не проверяется
-# Список нужен для того, что-бы формировать только "свои" потоки из EXCEL - файла маппинга
-wf_templates_list:
-  - ".+"
-#  - "^wf_serv_usns_dapp_rdv_usns_taxemployeepaymentfnsinstruction$"
-#  - "^wf_serv_usns_dapp_rdv_usns_taxoperationpaymentfnsinstruction$"
-#  - "^wf_serv_usns_dapp_rdv_usns_taxpaymentfnsapplication$"
-
 

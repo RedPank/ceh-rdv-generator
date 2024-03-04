@@ -52,4 +52,4 @@ hub_fields:
 hub_fields: []
 {%- endif %}
 
-history_field: {{ uni_ctx.hdp_processed }}
+history_field: {{ uni_ctx.tgt_history_field }}

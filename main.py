@@ -4,7 +4,7 @@ import logging
 import os
 import pathlib
 import tkinter
-
+import pandas as pd
 from core.config import Config
 from core.ui import MainWindow
 
@@ -35,6 +35,13 @@ def main() -> int:
     logging.info(f"config={config_name}")
     logging.info(f"log_file={Config.log_file}")
     logging.info(f'templates_path="{Config.templates_path}"')
+
+    # Включение режима "копирование при записи"
+    pd.options.mode.copy_on_write = True
+    # Печатаем все колонки
+    pd.set_option('display.max_columns', None)
+    pd.set_option('display.max_colwidth', 50)
+    pd.set_option('display.width', 255)
 
     win = MainWindow()
 

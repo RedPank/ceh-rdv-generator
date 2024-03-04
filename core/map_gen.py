@@ -67,8 +67,7 @@ def mapping_generator(
         logging.info(f"{tbl_index} {tgt_table}")
 
         # Проверяем соответствие названия целевой таблицы шаблону
-        pattern: str = Conf.field_type_list.get('tgt_table_name_regexp',
-                                                r"^[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*$")
+        pattern: str = Conf.get_regexp('tgt_table_name_regexp')
         if not re.match(pattern, tgt_table):
             logging.error(f'Имя целевой таблицы "{tgt_table}" на листе "Перечень загрузок Src-RDV" '
                           f'не соответствует шаблону "{pattern}"')
@@ -79,8 +78,7 @@ def mapping_generator(
 
         # Проверяем таблицу-источник
         src_table: str | None = stream_data.src_table
-        pattern: str = Conf.field_type_list.get('src_table_name_regexp',
-                                                r"^[a-zA-Z][a-zA-Z0-9_]*\.[a-zA-Z][a-zA-Z0-9_]*$")
+        pattern: str = Conf.get_regexp('src_table_name_regexp')
         if not re.match(pattern, src_table):
             logging.error(f'Имя таблицы-источника "{src_table}" на листе "Перечень загрузок Src-RDV" '
                           f'не соответствует шаблону "{pattern}"')

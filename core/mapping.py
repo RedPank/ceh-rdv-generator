@@ -103,7 +103,10 @@ def _generate_mapping_df(file_data: bytes, sheet_name: str):
     for col_name in columns_list:
         if not (col_name in mapping.columns.values):
             logging.error(f"Колонка '{col_name}' не найдена на листе '{sheet_name}'")
+            logging.error("Список допустимых имен колонок:")
             logging.error(columns_list)
+            logging.error("Список колонок на листе EXCEL:")
+            logging.error(mapping.columns.values)
             error = True
 
     if error:
@@ -113,6 +116,20 @@ def _generate_mapping_df(file_data: bytes, sheet_name: str):
     mapping = mapping[columns_list].dropna(how='all')
 
     return mapping
+
+
+def _is_duplicate(df: pd.DataFrame, field_name: str) -> bool:
+    """
+    Проверяет колонку DataFrame на наличие не пустых дубликатов
+
+    Args:
+        df: DataFrame в котором выполняется проверка
+        field_name: Имя поля в DataFrame, для которого выполняется проверка
+
+    Returns:
+        object: True-Дубликаты найдены
+    """
+    return True in df[field_name.lower()].dropna(how='all').duplicated()
 
 
 class MappingMeta:
@@ -187,11 +204,17 @@ class MappingMeta:
         visited: set = set()
         for tbl in self._tgt_tables_list:
             if tbl in visited:
-                logging.error(f"В таблице 'Перечень загрузок Src-RDV' "
+                logging.error(f"На листе 'Перечень загрузок Src-RDV' "
                               f"присутствуют повторяющиеся названия таблиц: {tbl}")
                 is_error: bool = True
             else:
                 visited.add(tbl)
+
+        # Проверка на наличие дубликатов на листе 'Перечень загрузок Src-RDV'
+        for field_name in ['Algorithm_UID', 'Flow_name', 'Tgt_table']:
+            if _is_duplicate(df=self.mapping_list, field_name=field_name):
+                logging.error(f"На листе 'Перечень загрузок Src-RDV' найдены дубликаты в колонке '{field_name}'")
+                is_error: bool = True
 
         if is_error:
             raise IncorrectMappingException("Ошибка в структуре данных")
@@ -226,7 +249,7 @@ class MappingMeta:
         # Удаляем пробельные символы
         src_cd = re.sub(r"\s", '', src_cd)
         # Выделяем имя источника
-        pattern: str = Config.field_type_list.get('src_cd_regexp', r"^='([A-Z_]+)'$")
+        pattern: str = Config.get_regexp('src_cd_regexp')
         result = re.match(pattern, src_cd)
 
         if result is None:
@@ -279,6 +302,7 @@ class MartMapping:
 
         hdp_processed: str = Config.setting_up_field_lists.get('hdp_processed', 'hdp_processed')
         hdp_processed_conversion = Config.setting_up_field_lists.get('hdp_processed_conversion', 'second')
+        tgt_history_field = Config.setting_up_field_lists.get('tgt_history_field', '<<вставить_поле_историчности>>')
 
         # Формирование контекста для шаблона uni_res
         # Сделано отдельно от src_ctx, что-бы не "ломать" мозги
@@ -287,16 +311,14 @@ class MartMapping:
                                   table_name=self.src_ctx.name,
                                   src_cd=self.src_cd,
                                   hdp_processed=hdp_processed,
-                                  hdp_processed_conversion=hdp_processed_conversion)
+                                  hdp_processed_conversion=hdp_processed_conversion,
+                                  tgt_history_field=tgt_history_field)
 
     def _get_tgt_table_fields(self) -> list:
         """
         Возвращает список полей целевой таблицы с типами данных и признаком "null"/"not null"
         Выполняет проверку типов и обязательных полей
         """
-
-        # Включение режима "копирование при записи"
-        pd.options.mode.copy_on_write = True
 
         corresp_datatype = Config.field_type_list.get("corresp_datatype", None)
         if not corresp_datatype:
@@ -325,22 +347,9 @@ class MartMapping:
         tgt = self.mart_mapping[['tgt_attribute', 'tgt_attr_datatype', 'tgt_attr_mandatory', 'tgt_pk', 'comment',
                                  '_pk', '_rk']].dropna(subset=['tgt_attribute', 'tgt_attr_datatype'])
 
-        # Удаляем строки для которых не заполнены поля источника и/или целевой таблицы.
-        data_types = self.mart_mapping[['src_attr', 'src_attr_datatype',
-                                        'tgt_attribute', 'tgt_attr_datatype']].dropna(how='any')
-        # Проверяем соответствие типов данных источника и целевой таблицы.
-        tmp_df = data_types.apply(func=check_datatypes, axis=1, result_type='reduce')
-        err_rows = data_types[~tmp_df]
-        if len(err_rows) > 0:
-            Config.is_warning = True
-            logging.warning(f"Типы данных источника полей и целевой таблицы различаются")
-            logging.warning(f"Проверьте корректность заполнения атрибутов")
-            for line in str(err_rows).splitlines():
-                logging.warning(line)
-
         # Проверяем типы данных, заданные для источника. Читаем данные из настроек программы
         src_attr_datatype: dict = Config.field_type_list.get('src_attr_datatype', dict())
-        err_rows = src[~src['src_attr_datatype'].isin(src_attr_datatype)]
+        err_rows = src[~src['src_attr_datatype'].isin(src_attr_datatype)][['src_attr', 'src_attr_datatype']]
         if len(err_rows) > 0:
             logging.error(f"Неверно указаны типы данных источника '{src.iloc[0].at['src_table']}':")
             for line in str(err_rows).splitlines():
@@ -350,31 +359,53 @@ class MartMapping:
 
         # Проверяем типы данных для целевой таблицы. Читаем данные из настроек программы
         tgt_attr_datatype: dict = Config.field_type_list.get('tgt_attr_datatype', dict())
-        err_rows = tgt[~tgt['tgt_attr_datatype'].isin(tgt_attr_datatype)]
+        err_rows = tgt[~tgt['tgt_attr_datatype'].isin(tgt_attr_datatype)][['tgt_attribute', 'tgt_attr_datatype']]
         if len(err_rows) > 0:
-            logging.error(f"Неверно указаны типы данных в строках для целевой таблицы '{self.mart_name}':")
+            logging.error(f"Неверно указаны типы данных целевой таблицы '{self.mart_name}':")
             for line in str(err_rows).splitlines():
                 logging.error(line)
 
             logging.error(f'Допустимые типы данных: {tgt_attr_datatype}')
             is_error = True
 
+        # Если типы данных прошли проверку,
+        # то выполняем "мягкую" проверку соответствия типа источника типу целевой таблицы
+        if not is_error:
+            # Выделяем колонки с типами данных.
+            # Удаляем строки для которых не заполнены поля источника и/или целевой таблицы.
+            data_types = self.mart_mapping[['src_attr', 'src_attr_datatype',
+                                            'tgt_attribute', 'tgt_attr_datatype']].dropna(how='any')
+            # Проверяем соответствие типов данных источника и целевой таблицы.
+            tmp_df = data_types.apply(func=check_datatypes, axis=1, result_type='reduce')
+            err_rows = data_types[~tmp_df]
+            if len(err_rows) > 0:
+                Config.is_warning = True
+                logging.warning(f"Типы данных полей источника и целевой таблицы различаются")
+                logging.warning(f"Проверьте корректность заполнения атрибутов")
+                for line in str(err_rows).splitlines():
+                    logging.warning(line)
+
         # Заполняем признак 'Tgt_attr_mandatory'.
         # При чтении данных Панда заменяет строку 'null' на значение 'nan'
         # Поэтому производим "обратную" замену ...
-        # И заодно "давим" предупреждение, которое "выскакивает" ...
-        chained_assignment = pd.options.mode.chained_assignment
-        pd.options.mode.chained_assignment = None
-        tgt['tgt_attr_mandatory'] = tgt['tgt_attr_mandatory'].fillna(value="null")
-        tgt['comment'] = tgt['comment'].fillna(value='')
-        pd.options.mode.chained_assignment = chained_assignment
+        # Заменяем "\xa0" на "null"
 
-        err_rows = tgt[~tgt['tgt_attr_mandatory'].isin(['null', 'not null'])]
+        # Как эта конструкция работает ...
+        tgt.fillna({'tgt_attr_mandatory': "null"}, inplace=True)
+        tgt.replace({'tgt_attr_mandatory': "\xa0"}, value="null",  inplace=True)
+
+        # tgt['comment'] = tgt['comment'].fillna(value='')
+        # pd.options.mode.chained_assignment = chained_assignment
+
+        err_rows = tgt[~tgt['tgt_attr_mandatory'].isin(['null', 'not null'])][['tgt_attribute', 'tgt_attr_mandatory']]
         if len(err_rows) > 0:
             logging.error(f"Неверно указан признак null/not null для целевой таблицы '{self.mart_name}':")
             for line in str(err_rows).splitlines():
                 logging.error(line)
             is_error = True
+
+        # Правим пустые комментарии: меняем NaN "null" на пустую строку
+        tgt.fillna({'comment': ""}, inplace=True)
 
         # Проверка: Поля 'pk' должны быть "not null"
         err_rows = tgt.query('_pk in ["pk"] and tgt_attr_mandatory != "not null"')
@@ -411,7 +442,7 @@ class MartMapping:
                     is_error = True
 
         # Проверяем соответствие названия полей целевой таблицы шаблону
-        pattern: str = Config.field_type_list.get('tgt_attr_name_regexp', r"^[a-zA-Z][a-zA-Z0-9_]*$")
+        pattern: str = Config.get_regexp('tgt_attr_name_regexp')
         err_rows = tgt[~tgt.tgt_attribute.str.match(pattern).fillna(True)]
         if len(err_rows) > 0:
             logging.error(f"Названия полей целевой таблицы '{self.mart_name}' не соответствуют шаблону '{pattern}'")
@@ -439,7 +470,7 @@ class MartMapping:
         # hub: pd.DataFrame = self.mart_mapping.query("Attr:Conversion_type == 'hub'")
         hub: pd.DataFrame = self.mart_mapping[self.mart_mapping['attr:conversion_type'] == 'hub']
         hub = hub[['tgt_attribute', 'attr:bk_schema', 'attr:bk_object', 'attr:nulldefault', 'src_attr',
-                   'expression', 'tgt_pk', 'tgt_attr_datatype', '_rk', 'src_attr_datatype']]
+                   'expression', 'tgt_pk', 'tgt_attr_datatype', '_rk', 'src_attr_datatype', 'tgt_attr_mandatory']]
         hub_list = hub.to_numpy().tolist()
 
         # Проверяем корректность имен
@@ -451,8 +482,15 @@ class MartMapping:
         for hh in hub_list:
 
             if hh[8] not in ['pk', 'bk']:
-                logging.error(f"Значение поля 'tgt_pk' ('{hh[6]}') для хабов должно содержать значение 'pk' или 'bk'")
+                logging.error(f"Значение поля 'tgt_pk' ('{hh[8]}') для хабов должно содержать значение 'pk' или 'bk'")
                 logging.error(hh)
+                raise IncorrectMappingException("Ошибка в данных EXCEL")
+
+            # Проверяем соответствие названия БК-схемы шаблону
+            pattern = Config.get_regexp('bk_schema_regexp')
+            if not re.match(pattern, hh[1]):
+                logging.error(
+                    f"Названия БК-схемы '{hh[1]}' не соответствуют шаблону '{pattern}'")
                 raise IncorrectMappingException("Ошибка в данных EXCEL")
 
             # Значение NaN, которое так "любит" pandas "плохо" воспринимается другими библиотеками
@@ -462,6 +500,10 @@ class MartMapping:
                 expression = hh[5]
                 # Удаляем знак "="
                 expression = expression.strip().removeprefix('=')
+
+            if hh[10] != 'not null':
+                logging.warning(f"Поле ссылки на хаб-таблицу '{hh[0]}' должно иметь атрибут 'not null'")
+                Config.is_warning = True
 
             hub_ctx: HubFieldContext = HubFieldContext(name=hh[0],
                                                        bk_schema_name=hh[1],
@@ -524,7 +566,7 @@ class MartMapping:
 
         is_error: bool = False
         # Проверяем соответствие названия полей источника шаблону
-        pattern: str = Config.field_type_list.get('src_attr_name_regexp', r"^[a-zA-Z][a-zA-Z0-9_\\$]*$")
+        pattern: str = Config.get_regexp('src_attr_name_regexp')
         err_rows = src_attr[~src_attr.src_attr.str.match(pattern)]
         if len(err_rows) > 0:
             logging.error(f"Названия полей в таблице - источнике '{src_tbl_name}' не соответствуют шаблону '{pattern}'")
@@ -532,7 +574,7 @@ class MartMapping:
                 logging.error(fld_name)
             is_error = True
 
-        # Проверяем обязательные поля
+        # Проверяем обязательные поля таблицы - источника
         src_attr_predefined_datatype: dict = Config.field_type_list.get('src_attr_predefined_datatype', dict())
         for fld_name in src_attr_predefined_datatype.keys():
             err_rows = src_attr.query(f"src_attr == '{fld_name}'")
@@ -550,7 +592,7 @@ class MartMapping:
             else:
                 if err_rows.iloc[0]['src_attr_datatype'] != src_attr_predefined_datatype[fld_name][0]:
                     logging.error(
-                        f"Параметры обязательного атрибута '{fld_name}' для целевой таблицы '{src_tbl_name}'"
+                        f"Параметры обязательного атрибута '{fld_name}' для таблицы - источника '{src_tbl_name}'"
                         f" указаны неверно")
                     for line in str(err_rows).splitlines():
                         logging.error(line)

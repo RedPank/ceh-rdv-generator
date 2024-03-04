@@ -1,7 +1,9 @@
+import logging
 import yaml
 from jinja2 import Environment, FileSystemLoader
 import os
 from pathlib import Path
+from core.exceptions import IncorrectConfigException
 
 
 class Config:
@@ -59,3 +61,13 @@ class Config:
                 os.remove(Config.log_file)
             else:
                 raise FileExistsError(f'Объект "{Config.log_file}" не является файлом')
+
+    @staticmethod
+    def get_regexp(name: str) -> str:
+        if name in Config.config:
+            return Config.config.get(name)
+        else:
+            logging.error(f'В файле конфигурации не найден шаблон с именем "{name}"')
+            raise IncorrectConfigException()
+
+

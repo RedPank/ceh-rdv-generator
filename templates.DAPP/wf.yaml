@@ -1,6 +1,6 @@
 name: {{ wf_file }}
 type: WORK_FLOW
-schema_version: '1.13'
+schema_version: '1.14'
 version: 1
 tags:
     {%- for tag in tags %}
@@ -10,7 +10,7 @@ tags:
 orientation: TB
 
 transaction:
-  commit_timeout: 3600
+  operator_default_timeout: 1800
   resources_lock_attempt_timeout: 60
   resources_lock_attempts: 30
 

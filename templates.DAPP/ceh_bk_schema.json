@@ -59,5 +59,12 @@
             ],
             "physical_options": ""
         }
-    ]
+    ],
+    "metrics": {
+        "{{values.actual_dttm_name}}": {
+            "id": "ceh.{{hub.hub_schema}}.{{hub.hub_name_only}}:{{values.actual_dttm_name}}",
+            "query": "[.last_sources[].conf.by_src | select(. != null) | .[] | to_entries | .[] | select(.key == \"{{values.actual_dttm_name}}\" and .value != \"default_value\" and .value != null).value] | min",
+            "default": "default_value"
+        }
+    }
 }
