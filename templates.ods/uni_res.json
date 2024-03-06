@@ -18,8 +18,9 @@
         }
     ],
     "metrics": {
+        "is_locked": "{{ '{{' }} metrics.is_locked | for_instance('{{ ctx.instance }}', resource_cd='{{ ctx.source }}.{{ ctx.schema.upper() }}.{{ ctx.table_name.upper() }}') {{ '}}' }}",
+        "locked_by": "{{ '{{' }} metrics.locked_by | for_instance('{{ ctx.instance }}', resource_cd='{{ ctx.source }}.{{ ctx.schema.upper() }}.{{ ctx.table_name.upper() }}') {{ '}}' }}",
         "dataset_max_date_to": "{{ '{{' }} metrics.dataset_max_date_to | for_instance('{{ ctx.instance }}', schema={{ ctx.instance }}.schema, table='{{ ctx.table_name.upper() }}', type='SOH') {{ '}}' }}",
-		
         "wf_max_date_to": {
             "id": "ods.{{ ctx.schema.upper() }}.{{ ctx.table_name.upper() }}.wf_max_date_to",
             "connection": "odbc",
@@ -29,7 +30,6 @@
             "refresh": "PDT00H01M",
             "alias": "dataset_max_date_to"
         },
-
         "{{ ctx.actual_dttm_name }}": {
             "id": "{{ ctx.source }}.{{ ctx.schema.upper() }}.{{ ctx.table_name.upper() }}.{{ ctx.actual_dttm_name }}",
             "connection": "odbc",
@@ -38,8 +38,6 @@
             "default": "1900-01-01T00:00:00.00000",
             "refresh": "PDT00H01M",
             "alias": "dataset_max_date_to"
-        },
-        "is_locked": "{{ '{{' }} metrics.is_locked | for_instance('{{ ctx.instance }}', resource_cd='{{ ctx.source }}.{{ ctx.schema.upper() }}.{{ ctx.table_name.upper() }}') {{ '}}' }}",
-        "locked_by": "{{ '{{' }} metrics.locked_by | for_instance('{{ ctx.instance }}', resource_cd='{{ ctx.source }}.{{ ctx.schema.upper() }}.{{ ctx.table_name.upper() }}') {{ '}}' }}"
+        }
     }
 }
