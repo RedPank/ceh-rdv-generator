@@ -14,7 +14,7 @@ import re
 def mapping_generator(
         file_path: str,
         out_path: str,
-        load_mode: str,
+        # load_mode: str,
         env: Environment,
         author: str
 ) -> None:
@@ -24,7 +24,7 @@ def mapping_generator(
     Args:
         file_path (str): Полный путь к файлу маппинга РДВ
         out_path (str): Каталог, в котором будут сформированы подкаталоги с описанием потоков
-        load_mode (str): Режим загрузки (increment, snapshot)
+        load_mode (str): Режим загрузки (increment, snapshot) - Удален
         env (Environment): Окружение шаблонов jinja2
         author (str): Наименование автора потоков для заполнения в шаблоне
     """
@@ -33,7 +33,7 @@ def mapping_generator(
 
     logging.info(f"file_path: {file_path}")
     logging.info(f"out_path: {out_path}")
-    logging.info(f"load_mode: {load_mode}")
+    #  logging.info(f"load_mode: {load_mode}")
     # logging.info(f"source_system: {source_system}")
     logging.info(f"author: {author}")
 
@@ -138,7 +138,7 @@ def mapping_generator(
             mart_name=tgt_table,
             mart_mapping=mapping,
             src_cd=src_cd,
-            data_capture_mode=load_mode,
+            data_capture_mode='increment',
             source_system=source_name,
             work_flow_name=base_flow_name,
             source_system_schema=source_system_schema

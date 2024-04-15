@@ -36,6 +36,7 @@ def main() -> int:
     logging.info(f"log_file={Config.log_file}")
     logging.info(f'templates_path="{Config.templates_path}"')
 
+    # Настройка pandas
     # Включение режима "копирование при записи"
     pd.options.mode.copy_on_write = True
     # Печатаем все колонки
@@ -45,6 +46,7 @@ def main() -> int:
 
     win = MainWindow()
 
+    # Смена иконки программы
     ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("VTB.ceh.ceh-rdv-generator.1_0")
     resource_path = os.path.join(pathlib.Path(__file__).parent.resolve(), 'res')
     win.iconbitmap(os.path.join(resource_path, "ceh-icon.ico"))

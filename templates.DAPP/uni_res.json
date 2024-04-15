@@ -20,13 +20,20 @@
     "metrics": {
         "is_locked": "{{ '{{' }} metrics.is_locked | for_instance('{{ ctx.instance }}', resource_cd='{{ ctx.source }}.{{ ctx.schema }}.{{ ctx.table_name }}') {{ '}}' }}",
         "locked_by": "{{ '{{' }} metrics.locked_by | for_instance('{{ ctx.instance }}', resource_cd='{{ ctx.source }}.{{ ctx.schema }}.{{ ctx.table_name }}') {{ '}}' }}",
-
         "dataset_max_date_to": "{{ '{{' }} metrics.dapp_rp_dataset_max_date_to | for_instance('{{ ctx.instance }}', database={{ ctx.instance }}.schema, table='{{ ctx.table_name }}') {{ '}}' }}",
-
+        "wf_max_date_to": {
+            "id": "{{ ctx.source }}.{{ ctx.schema }}.{{ ctx.table_name }}.wf_max_date_to",
+            "connection": "odbc",
+            "query": "select 'alias_metric'",
+            "query_parameters": null,
+            "default": "1900-01-01T00:00:00.00000",
+            "refresh": "PDT00H01M",
+            "alias": "dataset_max_date_to"
+        },
         "{{ ctx.actual_dttm_name }}": {
             "id": "{{ ctx.source }}.{{ ctx.schema }}.{{ ctx.table_name }}.{{ ctx.actual_dttm_name }}",
             "connection": "arena_conn",
-            "query": "SELECT date_trunc('second', now())",
+            "query": "SELECT date_trunc('second', now() - INTERVAL '1 DAY')",
             "query_parameters": null,
             "default": "1900-01-01T00:00:00",
             "refresh": "PDT00H01M"

@@ -4,7 +4,6 @@ from tkinter import ttk, SOLID
 from tkinter.messagebox import showinfo, showerror, showwarning
 from tkinter import filedialog
 import logging
-from tkinter.ttk import Scrollbar
 
 from jinja2 import TemplateNotFound
 
@@ -22,13 +21,12 @@ class MainWindow(tk.Tk):
 
         self.out_path = tk.StringVar(value=out_path)
         self.file_path = tk.StringVar(value=Conf.excel_file)
-        self.load_mode = tk.StringVar(value="increment")
         self.author = tk.StringVar(value=author)
 
         self.env = Conf.env
 
         self.wm_title("Генератор файлов описания потока")
-        self.geometry("500x500")
+        # self.geometry("500x500")
 
         frame = tk.Frame(
             self,       # Обязательный параметр, который указывает окно для размещения Frame.
@@ -58,12 +56,6 @@ class MainWindow(tk.Tk):
 
         src_cd_entry = ttk.Entry(frame, textvariable=self.out_path, font=("Arial", 10))
         src_cd_entry.pack(fill=tk.X, padx=25)
-
-        label_load_mode = ttk.Label(frame, text="Принцип загрузки", font=("Arial", 10))
-        label_load_mode.pack(pady=10)
-
-        load_mode_name = ttk.Combobox(frame, textvariable=self.load_mode, values=['increment'])
-        load_mode_name.pack(fill=tk.X, padx=25)
 
         label_author = ttk.Label(frame, text="Автор потока", font=("Arial", 10))
         label_author.pack(pady=10)
@@ -137,8 +129,6 @@ class MainWindow(tk.Tk):
         if not all((
                 self.file_path.get(),
                 self.out_path.get(),
-                # self.source_system.get(),
-                self.load_mode.get(),
                 self.author.get(),
                 )):
             showerror("Ошибка", "Проверьте заполнение полей формы")
@@ -150,8 +140,6 @@ class MainWindow(tk.Tk):
                 mapping_generator(
                     file_path=self.file_path.get(),
                     out_path=os.path.abspath(self.out_path.get()),
-                    # source_system=self.source_system.get(),
-                    load_mode=self.load_mode.get(),
                     env=self.env,
                     author=self.author.get()
                 )
@@ -177,7 +165,3 @@ class MainWindow(tk.Tk):
                 logging.exception("Ошибка чтения шаблона")
                 showerror(title="Ошибка", message=msg)
 
-            # except Exception:
-            #     msg = "Неизвестная ошибка.\nПроверьте журнал работы программы."
-            #     logging.exception("Неизвестная ошибка")
-            #     showerror(title="Ошибка", message=msg)

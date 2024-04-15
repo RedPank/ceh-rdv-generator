@@ -132,6 +132,26 @@ def _is_duplicate(df: pd.DataFrame, field_name: str) -> bool:
     return True in df[field_name.lower()].dropna(how='all').duplicated()
 
 
+def _get_duplicate_list(df: pd.DataFrame, field_name: str) -> list | None:
+    """
+    Проверяет колонку DataFrame на наличие не пустых дубликатов
+
+    Args:
+        df: Объект DataFrame, в котором выполняется поиск дубликатов.
+        field_name: Имя поля в DataFrame, для которого выполняется поиск.
+
+    Returns:
+        object: None, если нет дубликатов или список дубликатов
+    """
+
+    dupl = df[~df[field_name.lower()].dropna().duplicated()].tolist()
+
+    if len(dupl) > 0:
+        return dupl
+
+    return None
+
+
 class MappingMeta:
     # Данные листа 'Детали загрузок Src-RDV'
     mapping_df: pd.DataFrame
@@ -302,7 +322,7 @@ class MartMapping:
 
         hdp_processed: str = Config.setting_up_field_lists.get('hdp_processed', 'hdp_processed')
         hdp_processed_conversion = Config.setting_up_field_lists.get('hdp_processed_conversion', 'second')
-        tgt_history_field = Config.setting_up_field_lists.get('tgt_history_field', '<<вставить_поле_историчности>>')
+        tgt_history_field = Config.setting_up_field_lists.get('tgt_history_field', '')
 
         # Формирование контекста для шаблона uni_res
         # Сделано отдельно от src_ctx, что-бы не "ломать" мозги
@@ -394,9 +414,6 @@ class MartMapping:
         tgt.fillna({'tgt_attr_mandatory': "null"}, inplace=True)
         tgt.replace({'tgt_attr_mandatory': "\xa0"}, value="null",  inplace=True)
 
-        # tgt['comment'] = tgt['comment'].fillna(value='')
-        # pd.options.mode.chained_assignment = chained_assignment
-
         err_rows = tgt[~tgt['tgt_attr_mandatory'].isin(['null', 'not null'])][['tgt_attribute', 'tgt_attr_mandatory']]
         if len(err_rows) > 0:
             logging.error(f"Неверно указан признак null/not null для целевой таблицы '{self.mart_name}':")
@@ -464,10 +481,6 @@ class MartMapping:
          "имя_поля_в_hub"]
         """
 
-        # Ф-ия "where" в библиотеке pandas не фильтрует записи, а меняет значения полей по условию !!!
-        # hub: pd.DataFrame = self.mart_mapping.where(cond=self.mart_mapping['Attr:Conversion_type'] == 'hub')
-        # Не используйте разные "знаки" в именах полей ...
-        # hub: pd.DataFrame = self.mart_mapping.query("Attr:Conversion_type == 'hub'")
         hub: pd.DataFrame = self.mart_mapping[self.mart_mapping['attr:conversion_type'] == 'hub']
         hub = hub[['tgt_attribute', 'attr:bk_schema', 'attr:bk_object', 'attr:nulldefault', 'src_attr',
                    'expression', 'tgt_pk', 'tgt_attr_datatype', '_rk', 'src_attr_datatype', 'tgt_attr_mandatory']]
@@ -668,7 +681,6 @@ class MartMapping:
             algo=algo,
             algo_sub=algo_sub,
             data_capture_mode=self.data_capture_mode,
-            # hub_pool=self.tgt_ctx.hub_pool,
             work_flow_name=self.work_flow_name,
             hub_ctx_list=self.tgt_ctx.hub_ctx_list,
             source_system=self.source_system,

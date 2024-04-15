@@ -52,4 +52,6 @@ hub_fields:
 hub_fields: []
 {%- endif %}
 
+{%- if uni_ctx.tgt_history_field|length > 0 %}
 history_field: {{ uni_ctx.tgt_history_field }}
+{%- endif %}

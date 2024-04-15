@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 
 import pandas
 
-from core.config import Config as Conf
+from core.config import Config as Conf, Config
 from core.exceptions import IncorrectMappingException
 
 
@@ -125,7 +125,6 @@ class TargetContext(TableContext):
         # Цикл по списку hub_context
         for row in self.hub_context:
             self.hub_ctx_list.append(row)
-            # self.hub_pool.add(row.hub_name)
 
         hub_fields: set = {hub_f.name for hub_f in self.hub_ctx_list}
         fields = {field_ctx.name for field_ctx in self.field_ctx_list}
@@ -146,6 +145,12 @@ class TargetContext(TableContext):
         ignore_list: set = not_null_fields.union(ignore_hash_set)
         # Удаляем поля, которые являются ссылками на hub,  поля not null, поля из списка ignore_hash_set
         self.hash_src_fields = sorted(list(fields.difference(ignore_list).difference(hub_fields)))
+
+        if len(self.hash_src_fields) > 100:
+            Config.is_warning = True
+            logging.warning(f"Количество полей для расчета hash: {len(self.hash_src_fields)}. "
+                            f"Допустимое значение - 100")
+
         return
 
 

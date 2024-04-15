@@ -150,7 +150,6 @@ setting_up_field_lists:
   # Исключение полей из списка идет ДО добавления полей из секции add_field_map_ctx_list.
   # Не включать поля, которые присутствуют в теге tgt_history_field (для ODS).
   ignore_field_map_ctx_list:
-    #- effective_dttm
     - valid_flg
     - src_cd
     - hash_diff
@@ -176,7 +175,8 @@ setting_up_field_lists:
   hdp_processed_conversion: second
  
   # Поле "историчности" в целевой таблице (поле history_field в шаблоне mart.yaml)	 
-  tgt_history_field: effective_dttm
+  # Применять с осторожностью. Алгоритм обработки этого параметра фреймом мне неизвестен.
+  # tgt_history_field: effective_dttm
 
 # Настройки состава/типа/названия полей
 field_type_list:
@@ -209,7 +209,8 @@ field_type_list:
 
   # Список возможных значений колонки "Src_attr_datatype"
   # Внимание! Фрейм поддерживает ограниченной количество типов.
-  src_attr_datatype: ['string', 'timestamp', 'bigint', 'decimal']
+  # 
+  src_attr_datatype: ['text', 'string', 'timestamp', 'bigint', 'decimal', 'integer']
 
   # Список возможных значений колонки "Tgt_attr_datatype"
   tgt_attr_datatype: ['text', 'timestamp', 'char(32)', 'bigint', 'boolean', 'integer', 'decimal', 'date']
@@ -222,7 +223,8 @@ field_type_list:
             'timestamp': ['timestamp'],
             'bigint': ['bigint'],
             'decimal': ['decimal'],
-            'date': ['date']
+            'date': ['date'],
+            'integer': ['bigint']
   }
 
 # Список имен колонок на листах файла EXCEL, которые должны присутствовать
