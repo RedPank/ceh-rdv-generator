@@ -119,7 +119,7 @@ class TargetContext(TableContext):
 
         # Список полей, которые не будут использоваться для формирования hash
         ignore_hash_set: list = Conf.setting_up_field_lists.get('ignore_hash_set', list())
-        # Список полей, которые не включаются в опцию distributed_by / multi_fields
+        # Список полей, которые не включаются в опцию distributed_by
         ignore_distributed_src: list = Conf.setting_up_field_lists.get('ignore_distributed_src', list())
 
         # Цикл по списку hub_context
@@ -133,8 +133,9 @@ class TargetContext(TableContext):
         # Список первичных ключей для опции multi_fields. Поля, которые являются ссылками на hub - не включаются
         self.multi_fields = {field_ctx.name for field_ctx in self.field_ctx_list
                              if field_ctx.pk == "pk" and
-                             field_ctx.name not in ignore_distributed_src and
-                             field_ctx.name not in hub_fields}
+                             # field_ctx.name not in ignore_distributed_src and
+                             field_ctx.name not in hub_fields
+                             }
 
         # Список первичных ключей для опции distributed by
         self.distributed_by = ','.join(sorted([field_ctx.name for field_ctx in self.field_ctx_list
