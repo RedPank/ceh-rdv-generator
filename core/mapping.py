@@ -239,6 +239,9 @@ class MappingMeta:
         if is_error:
             raise IncorrectMappingException("Ошибка в структуре данных")
 
+        # Заменяем значения NaN на пустые строки, что-бы дальше "не мучится"
+        self.mapping_list['scd_type'] = self.mapping_list['scd_type'].fillna(value="")
+
     def get_tgt_tables_list(self) -> list[str]:
         """
         Возвращает список целевых таблиц (из колонки 'tgt_table')
@@ -358,6 +361,10 @@ class MartMapping:
             if (row['src_attr'].removesuffix('_id') and row['tgt_attribute'].removesuffix('_rk') and
                     row['src_attr_datatype'] == 'string' and row['tgt_attr_datatype'] == 'bigint'):
                 return True
+
+            if row['src_attr_datatype'] not in corresp_datatype.keys():
+                logging.error(f"Тип данных источника '{row['src_attr_datatype']}' отсутствует в 'corresp_datatype'")
+                return False
 
             return row['tgt_attr_datatype'] in corresp_datatype[row['src_attr_datatype']]
 

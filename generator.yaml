@@ -81,7 +81,7 @@ tags:
   - "prv:{{ tags.prv }}"
   - "tgt:{{ tags.tgt }}"
   - "tgt-tbl:{{ tags.tgt_tbl }}"
-  - "rls:51"
+  - "rls:???"
   - "cf:{{ tags.cf_flow }}"
   - "wf:{{ tags.wf_flow }}"
   - subo: *subo
@@ -131,7 +131,7 @@ setting_up_field_lists:
     - hdp_processed_dttm
     - processed_dttm
 
-  # Список полей, которые НЕ включаются в опцию distributed_by / multi_fields
+  # Список полей, которые НЕ включаются в опцию distributed_by
   ignore_distributed_src:
     - effective_date
     - effective_dttm
@@ -158,18 +158,21 @@ setting_up_field_lists:
     - deleted_flg
     - valid_flg
 
-  # Список полей с описанием, которые БУДУТ добавлены в секцию field_map шаблона wf.yaml
-  # Добавление идет после исключения (список ignore_field_map_ctx_list)
-  # Если поле уже присутствует в списке полей, то будет инициирована ошибка
-  # Поле добавляется "как есть"
+  # Список полей с описанием, которые БУДУТ добавлены в секцию field_map шаблона wf.yaml .
+  # Добавление идет после исключения (список ignore_field_map_ctx_list).
+  # Если поле уже присутствует в списке полей, то будет инициирована ошибка.
+  # Поле добавляется "как есть".
+  # Ниже приведен, как можно добавить поле deleted_flg, если его описания нет в EXCEL.
+  # Следует использовать если нет возможности/желания править EXCEL или описать поле в EXCEL затруднительно
+  # из-за сложности
   add_field_map_ctx_list:
 #    deleted_flg:
 #      type: sql_expression
 #      value: decode(upper(op_type), 'DELETE', true, false)
 #      field_type: BOOLEAN
 
-  # Определение поля даты источнка по которому будет выполняться фильтрация новых записей 
-  # Шаблон wf.yaml
+  # Определение поля даты в таблице-источнике по которому будет выполняться фильтрация новых записей.
+  # Используется в шаблоне wf.yaml.
   hdp_processed: commit_ts
   # Отсечение даты: microseconds,milliseconds,second,minute,hour,day,week,month,quarter,year,decade,,centurymillennium
   hdp_processed_conversion: second
@@ -208,17 +211,18 @@ field_type_list:
   }
 
   # Список возможных значений колонки "Src_attr_datatype"
-  # Внимание! Фрейм поддерживает ограниченной количество типов.
-  # 
+  # Фрейм поддерживает ограниченное количество типов.
   src_attr_datatype: ['text', 'string', 'timestamp', 'bigint', 'decimal', 'integer']
 
   # Список возможных значений колонки "Tgt_attr_datatype"
+  # Фрейм поддерживает ограниченное количество типов.
   tgt_attr_datatype: ['text', 'timestamp', 'char(32)', 'bigint', 'boolean', 'integer', 'decimal', 'date']
 
   # Список "корреспонденций" типов данных источника и целевой таблицы
   # Если "пара" типа данных источника и целевой таблицы (из EXCEL) не найдена в списке, то выдается
   # "мягкое" предупреждение
   corresp_datatype : {
+            'text': ['text'],
             'string': ['text'],
             'timestamp': ['timestamp'],
             'bigint': ['bigint'],
@@ -228,7 +232,6 @@ field_type_list:
   }
 
 # Список имен колонок на листах файла EXCEL, которые должны присутствовать
-# Регистр букв важен!
 # Названия колонок используются в программе, так что менять их без изменения кода нельзя
 # Регистр букв не имеет значения
 excel_data_definition:
