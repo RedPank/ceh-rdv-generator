@@ -20,6 +20,7 @@ class Config:
     excel_file: str
     config_file: str
     is_warning: bool = False
+    is_error: bool = False
 
     @staticmethod
     def load_config(config_name: str):

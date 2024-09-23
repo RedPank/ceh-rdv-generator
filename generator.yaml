@@ -233,41 +233,53 @@ field_type_list:
 
 # Список имен колонок на листах файла EXCEL, которые должны присутствовать
 # Названия колонок используются в программе, так что менять их без изменения кода нельзя
+# Замена названий колонок может быть выполнена через секцию col_aliases
 # Регистр букв не имеет значения
 excel_data_definition:
-  columns: {
-    'Детали загрузок Src-RDV': [
-        'Algorithm_UID',
-        'SubAlgorithm_UID',
-        'Src_table',
-        'Src_attr',
-        'Src_attr_datatype',
-        'Src_PK',
-        'Expression',
-        'Comment',
-        'Tgt_table',
-        'Tgt_PK',
-        'Tgt_attribute',
-        'Tgt_attr_datatype',
-        'Tgt_attr_mandatory',
-        'Attr:Conversion_type',
-        'Attr:BK_Schema',
-        'Attr:BK_Object',
-        'Attr:nulldefault'
-    ],
-    'Перечень загрузок Src-RDV': [
-        'algorithm_uid',
-        'subalgorithm_uid',
-        'flow_name',
-        'tgt_table',
-        'target_rdv_object_type',
-        'src_table',
-        'source_name',
-        'scd_type',
-        'algo_name',
-        'data_filtering',
-        'distribution_field',
-        'comment'
-    ]
-  }
+  columns:
+    'Детали загрузок Src-RDV':
+      - 'Algorithm_UID'
+      - 'SubAlgorithm_UID'
+      - 'Src_table'
+      - 'Src_attr'
+      - 'Src_attr_datatype'
+      - 'Src_PK'
+      - 'Expression'
+      - 'Comment'
+      - 'Tgt_table'
+      - 'Tgt_PK'
+      - 'Tgt_attribute'
+      - 'Tgt_attr_datatype'
+      - 'Tgt_attr_mandatory'
+      - 'Attr:Conversion_type'
+      - 'Attr:BK_Schema'
+      - 'Attr:BK_Object'
+      - 'Attr:nulldefault'
+    'Перечень загрузок Src-RDV':
+      - 'algorithm_uid'
+      - 'subalgorithm_uid'
+      - 'flow_name'
+      - 'tgt_table'
+      - 'target_rdv_object_type'
+      - 'src_table'
+      - 'source_name'
+      - 'scd_type'
+      - 'algo_name'
+      - 'data_filtering'
+      - 'distribution_field'
+      - 'comment'
+    # Список псевдонимов имен колонок. У каждого имени может быть один псевдоним.
+    # "Название колонки в программе": "Название колонки на листе"
+  col_aliases:
+    'Детали загрузок Src-RDV':
+      'Algorithm_UID': 'UID'
+      'subalgorithm_uid': 'Sub_UID'
+      'comment': 'Src_attr_desc'
+      'tgt_attribute': 'Tgt_attr'
 
+    'Перечень загрузок Src-RDV':
+      'Algorithm_UID': 'UID'
+      'subalgorithm_uid': 'Sub_UID'
+      'tgt_table': 'Target_table'
+      'target_rdv_object_type': 'Trarget_DV_Object_Type'
+      'src_table': 'Source_table'

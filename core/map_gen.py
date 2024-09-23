@@ -30,6 +30,7 @@ def mapping_generator(
     """
 
     Conf.is_warning = False
+    Conf.is_error = False
 
     logging.info(f"file_path: {file_path}")
     logging.info(f"out_path: {out_path}")
@@ -71,7 +72,9 @@ def mapping_generator(
         if not re.match(pattern, tgt_table):
             logging.error(f'Имя целевой таблицы "{tgt_table}" на листе "Перечень загрузок Src-RDV" '
                           f'не соответствует шаблону "{pattern}"')
-            raise IncorrectMappingException("Имя целевой таблицы не определено")
+            # raise IncorrectMappingException("Имя целевой таблицы не определено")
+            Conf.is_error = True
+            continue
 
         # Данные "Перечень загрузок Src-RDV" листа для таблицы
         stream_data: StreamData = StreamData(df=mapping_meta.mapping_list, tgt_table=tgt_table)
@@ -82,7 +85,10 @@ def mapping_generator(
         if not re.match(pattern, src_table):
             logging.error(f'Имя таблицы-источника "{src_table}" на листе "Перечень загрузок Src-RDV" '
                           f'не соответствует шаблону "{pattern}"')
-            raise IncorrectMappingException("Имя таблицы-источника не определено")
+            # raise IncorrectMappingException("Имя таблицы-источника не определено")
+            Conf.is_error = True
+            continue
+
         logging.info(f'src_table = {src_table}')
 
         # Данные для заданной целевой таблицы
@@ -93,7 +99,10 @@ def mapping_generator(
         if not src_cd:
             logging.error(f'Для целевой таблицы "{tgt_table}" неверно задано/не задано имя источника')
             logging.error('Имя источника задается в колонке "Expression" для поля "src_cd"')
-            raise IncorrectMappingException("Имя источника не определено")
+            # raise IncorrectMappingException("Имя источника не определено")
+            Conf.is_error = True
+            continue
+
         logging.info(f'src_cd = {src_cd}')
 
         # Имя потока без wf_/cf_
@@ -116,14 +125,18 @@ def mapping_generator(
         if not base_flow_name:
             logging.error(f'Для таблицы {tgt_table} неверно задано/не задано поле "Источник данных'
                           f' (транспорт)"/Source_name')
-            raise IncorrectMappingException("Поле 'Source_name' не определено")
+            # raise IncorrectMappingException("Поле 'Source_name' не определено")
+            Conf.is_error = True
+            continue
         logging.info(f'source_name = {source_name}')
 
         # Алгоритм - Algorithm_UID
         algorithm_uid: str = stream_data.algorithm_uid
         if not algorithm_uid:
             logging.error(f'Для таблицы {tgt_table} неверно задано/не задано поле "UID алгоритма"/"Algorithm_UID"')
-            raise IncorrectMappingException("Поле 'Algorithm_UID' не определено")
+            # raise IncorrectMappingException("Поле 'Algorithm_UID' не определено")
+            Conf.is_error = True
+            continue
         logging.info(f'algorithm_uid = {algorithm_uid}')
 
         # Название схемы таблицы (берется из названия таблицы src_table)
@@ -131,7 +144,9 @@ def mapping_generator(
         if not source_system_schema:
             logging.error(f'На листе "Перечень загрузок Src-RDV" '
                           f'неверно задано/не задано имя схемы источника в имени таблицы "{src_table}"')
-            raise IncorrectMappingException("Имя схемы источника не определено")
+            # raise IncorrectMappingException("Имя схемы источника не определено")
+            Conf.is_error = True
+            continue
 
         # Подготовка данных для файлов для одной таблицы
         exp_obj = MartMapping(
@@ -158,5 +173,8 @@ def mapping_generator(
         # Вывод данных в файлы
         mp_exporter.load()
         logging.info(f'Файлы потока {base_flow_name} сформированы')
+
+    if Conf.is_error:
+        logging.error(f'Один или более потоков не были сформированы из-за обнаруженных ошибок')
 
     logging.info('')

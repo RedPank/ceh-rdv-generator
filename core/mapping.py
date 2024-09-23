@@ -1,3 +1,4 @@
+import copy
 import random
 import string
 
@@ -84,8 +85,16 @@ def _generate_mapping_df(file_data: bytes, sheet_name: str):
         Объект с типом DataFrame.
     """
 
+    # Список имен колонок в программе
     columns = Config.excel_data_definition.get('columns', dict())
     columns_list: list[str] = [col_name.lower().strip() for col_name in columns[sheet_name]]
+
+    # Список "псевдонимов" названий колонок
+    col_aliases = Config.excel_data_definition.get('col_aliases', dict())
+    # "Название колонки в программе": "Название колонки на листе"
+    aliases_list: dict = {}
+    for key, val in col_aliases[sheet_name].items():
+        aliases_list[key.lower().strip()] = val.lower().strip()
 
     # Преобразование данных в DataFrame
     try:
@@ -95,19 +104,28 @@ def _generate_mapping_df(file_data: bytes, sheet_name: str):
         raise
 
     # Переводим названия колонок в нижний регистр
+    # rename_list - словарь {старое_название: новое_название}
     rename_list = {col: col.lower().strip() for col in mapping.columns}
     mapping = mapping.rename(columns=rename_list)
 
     # Проверка полученных данных
     error: bool = False
+    # Находим соответствие между "Названием колонки в программе" и "Названием колонки на листе"
     for col_name in columns_list:
         if not (col_name in mapping.columns.values):
-            logging.error(f"Колонка '{col_name}' не найдена на листе '{sheet_name}'")
-            logging.error("Список допустимых имен колонок:")
-            logging.error(columns_list)
-            logging.error("Список колонок на листе EXCEL:")
-            logging.error(mapping.columns.values)
-            error = True
+
+            alias: str | None = aliases_list.get(col_name, None)
+            if alias and alias in mapping.columns.values:
+                logging.info(f"Иия колонки '{alias}' на листе '{sheet_name}' заменено на '{col_name}'")
+                mapping = mapping.rename(columns={alias: col_name})
+
+            else:
+                logging.error(f"Колонка '{col_name}' не найдена на листе '{sheet_name}'")
+                logging.error("Список допустимых имен колонок:")
+                logging.error(columns_list)
+                logging.error("Список колонок на листе EXCEL:")
+                logging.error(mapping.columns.values)
+                error = True
 
     if error:
         raise IncorrectMappingException("Ошибка в структуре данных EXCEL")
@@ -239,7 +257,7 @@ class MappingMeta:
         if is_error:
             raise IncorrectMappingException("Ошибка в структуре данных")
 
-        # Заменяем значения NaN на пустые строки, что-бы дальше "не мучится"
+        # Заменяем значения NaN на пустые строки, что-бы дальше "не мучиться"
         self.mapping_list['scd_type'] = self.mapping_list['scd_type'].fillna(value="")
 
     def get_tgt_tables_list(self) -> list[str]:
@@ -277,6 +295,7 @@ class MappingMeta:
 
         if result is None:
             logging.error(f"Не найдено имя источника для таблицы '{tgt_table}' по шаблону '{pattern}'")
+            logging.error(f"Найденное значение: {src_cd}")
             return None
 
         src_cd = result.groups()[0]
@@ -490,7 +509,7 @@ class MartMapping:
 
         hub: pd.DataFrame = self.mart_mapping[self.mart_mapping['attr:conversion_type'] == 'hub']
         hub = hub[['tgt_attribute', 'attr:bk_schema', 'attr:bk_object', 'attr:nulldefault', 'src_attr',
-                   'expression', 'tgt_pk', 'tgt_attr_datatype', '_rk', 'src_attr_datatype', 'tgt_attr_mandatory']]
+                   'expression', 'tgt_pk', 'tgt_attr_datatype', '_pk', 'src_attr_datatype', 'tgt_attr_mandatory']]
         hub_list = hub.to_numpy().tolist()
 
         # Проверяем корректность имен
