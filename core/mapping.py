@@ -1,4 +1,3 @@
-import copy
 import random
 import string
 
@@ -514,8 +513,10 @@ class MartMapping:
 
         # Проверяем корректность имен
         # Шаблон формирования short_name в wf.yaml
-        pattern = r"^[a-z][a-z0-9_]{2,22}$"
-        bk_object_pattern = r"^[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*$"
+        # pattern = r"^[a-z][a-z0-9_]{2,22}$"
+        # bk_object_pattern = r"^[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*$"
+        bk_object_regexp = Config.get_regexp('bk_object_regexp')
+        bk_schema_regexp = Config.get_regexp('bk_schema_regexp')
 
         ret_list: list = list()
         for hh in hub_list:
@@ -526,10 +527,9 @@ class MartMapping:
                 raise IncorrectMappingException("Ошибка в данных EXCEL")
 
             # Проверяем соответствие названия БК-схемы шаблону
-            pattern = Config.get_regexp('bk_schema_regexp')
-            if not re.match(pattern, hh[1]):
+            if not re.match(bk_schema_regexp, hh[1]):
                 logging.error(
-                    f"Названия БК-схемы '{hh[1]}' не соответствуют шаблону '{pattern}'")
+                    f"Названия БК-схемы '{hh[1]}' не соответствуют шаблону '{bk_schema_regexp}'")
                 raise IncorrectMappingException("Ошибка в данных EXCEL")
 
             # Значение NaN, которое так "любит" pandas "плохо" воспринимается другими библиотеками
@@ -561,15 +561,15 @@ class MartMapping:
             h_schema: str
             h_name: str
 
-            if not re.match(bk_object_pattern, hh[2]):
+            if not re.match(bk_object_regexp, hh[2]):
                 logging.error(f"Значение hub_name '{hh[2]}' в поле 'attr:bk_object' не соответствует шаблону "
-                              f"'{bk_object_pattern}'")
+                              f"'{bk_object_regexp}'")
                 raise IncorrectMappingException("Ошибка в структуре данных EXCEL")
             else:
                 h_schema, h_name = hh[2].split('.')
 
             # Длина short_name должна быть от 2 до 22 символов
-            if not re.match(pattern, h_name):
+            if not re.match(bk_schema_regexp, h_name):
                 h_short_name = ('hub_' + h_name.removeprefix('hub_')[0:12] + '_' +
                                 ''.join(random.choice(string.ascii_lowercase) for i in range(5)))
             else:

@@ -288,19 +288,19 @@ class MartPackExporter:
 
         """
         # Описание таблицы - источника
-        exp_path = os.path.join(self.path, r"etl-scale\general_ledger\src_rdv\schema\db_tables")
+        exp_path = os.path.join(self.path, r"ceh-etl\general_ledger\src_rdv\schema\db_tables")
         self._src_exporter.export(exp_path)
 
         # Описание uni - ресурса таблицы источника
-        exp_path = os.path.join(self.path, r"etl-scale\_resources\uni")
+        exp_path = os.path.join(self.path, r"ceh-etl\_resources\uni")
         self._src_exporter.export_uni_resource(exp_path)
 
         # Описание целевой таблицы (mart)
-        exp_path = os.path.join(self.path, r"etl-scale\general_ledger\src_rdv\schema\ceh\rdv")
+        exp_path = os.path.join(self.path, r"ceh-etl\general_ledger\src_rdv\schema\ceh\rdv")
         self._tgt_exporter.export_yaml(exp_path)
 
         # Скрипт создания целевой таблицы (mart)
-        exp_path = os.path.join(self.path, r"adgp\extensions\ripper\.data")
+        exp_path = os.path.join(self.path, r"ceh-ddl\extensions\ripper\.data")
         self._tgt_exporter.export_sql(exp_path)
 
         # Необязательные скрипты создания/заполнения hub - таблиц
@@ -312,17 +312,17 @@ class MartPackExporter:
         self._tgt_exporter.export_sql_view(exp_path)
 
         # Описание ресурса целевой таблицы (mart)
-        exp_path = os.path.join(self.path, r"etl-scale\_resources\ceh\rdv")
+        exp_path = os.path.join(self.path, r"ceh-etl\_resources\ceh\rdv")
         self._tgt_exporter.export_ceh_resource(exp_path)
 
         # Рабочий поток (wf_*.yaml)
-        exp_path = os.path.join(self.path, r"etl-scale\general_ledger\src_rdv\schema\work_flows")
+        exp_path = os.path.join(self.path, r"ceh-etl\general_ledger\src_rdv\schema\work_flows")
         self._mapping_exporter.export_wf(exp_path)
 
         # py - файл потока управления (cf_*.py)
-        exp_path = os.path.join(self.path, r"etl-scale\general_ledger\src_rdv\flow_dumps")
+        exp_path = os.path.join(self.path, r"ceh-etl\general_ledger\src_rdv\flow_dumps")
         self._mapping_exporter.export_cf(exp_path)
 
         # py - файл рабочего потока (wf_*.py)
-        exp_path = os.path.join(self.path, r"etl-scale\general_ledger\src_rdv\dags")
+        exp_path = os.path.join(self.path, r"ceh-etl\general_ledger\src_rdv\dags")
         self._mapping_exporter.export_py(exp_path)

@@ -8,11 +8,23 @@
 {%- endfor %}
 {%- endif %}
     ],
-    "features": {},
+    "features": {"domain": "{{ ctx.schema.upper() }}", "source_system": "{{ ctx.src_cd.upper() }}"},
     "datasets": [
         {
             "name": "{{ ctx.name }}",
-            "schema_name": "{{ ctx.schema }}"
+            "schema_name": "{{ ctx.schema }}",
+            "columns": [
+{%- if ctx.field_ctx_list|length > 0 %}
+{%- for col in ctx.field_ctx_list %}
+              {
+                "name": {{ col.name }},
+                "type": {{ col.datatype }},
+                "nullable": {{ col.is_nullable }},
+                "primary_key": {%- if col.pk == 'pk'%} True {% else %} False {% endif %}
+              }{%- if not loop.last -%},{% endif -%}
+{%- endfor %}
+{%- endif %}
+            ]
         }
     ],
     "is_readonly": false,
