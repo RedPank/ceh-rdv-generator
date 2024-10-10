@@ -7,10 +7,10 @@ CREATE TABLE IF NOT EXISTS {{hub.hub_schema}}.{{hub.hub_name_only}} (
     version_id int8 NOT NULL
 )
 WITH (
-    appendonly=true,
-    orientation=column,
-    compresslevel=1,
-    compresstype=zstd
+  appendoptimized=true,
+  orientation=column,
+  compresslevel=1,
+  compresstype=zstd
 )
 DISTRIBUTED BY ({{hub.name}});
 

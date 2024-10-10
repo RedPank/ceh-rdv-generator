@@ -1,4 +1,5 @@
 import os
+import subprocess
 import tkinter as tk
 from tkinter import ttk, SOLID
 from tkinter.messagebox import showinfo, showerror, showwarning
@@ -16,16 +17,15 @@ class MainWindow(tk.Tk):
     def __init__(self):
         super().__init__()
 
-        author: str = Conf.config.get('author', 'Unknown Author')
-        out_path: str = os.path.abspath(Conf.config.get('out_path', '999'))
-
-        self.out_path = tk.StringVar(value=out_path)
+        author: str = Conf.author
+        # out_path: str = Conf.out_path
+        # self.out_path = tk.StringVar(value=out_path)
         self.file_path = tk.StringVar(value=Conf.excel_file)
         self.author = tk.StringVar(value=author)
 
         self.env = Conf.env
 
-        self.wm_title("Генератор файлов описания потока")
+        self.wm_title("Генератор файлов описания src-rdv потока")
         # self.geometry("500x500")
 
         frame = tk.Frame(
@@ -37,39 +37,43 @@ class MainWindow(tk.Tk):
         )
         frame.pack(anchor='nw', fill='both', padx=5, pady=10)
 
-        open_file_dialog_button = ttk.Button(
-            frame,
-            text="Выбрать EXCEL-файл с описанием данных",
-            command=self._setup_file_path
-        )
-        open_file_dialog_button.pack(fill=tk.X, padx=25, pady=15)
-
         file_path_text = ttk.Entry(
             frame,
             textvariable=self.file_path,
             font=("Arial", 10),
             state='readonly')
-        file_path_text.pack(fill=tk.X, padx=25)
+        file_path_text.pack(fill=tk.X, padx=25, pady=10)
 
-        label_src_cd = ttk.Label(frame, text="Каталог", font=("Arial", 10))
-        label_src_cd.pack(pady=10)
+        open_file_dialog_button = ttk.Button(
+            frame,
+            text="Выбрать EXCEL-файл с маппингом",
+            command=self._setup_file_path
+        )
+        open_file_dialog_button.pack(fill=tk.X, padx=25, pady=0)
 
-        src_cd_entry = ttk.Entry(frame, textvariable=self.out_path, font=("Arial", 10))
-        src_cd_entry.pack(fill=tk.X, padx=25)
+        # label_src_cd = ttk.Label(frame, text="Путь для размещения каталога(ов) потока(ов)", font=("Arial", 10))
+        # label_src_cd.pack(pady=10)
 
-        label_author = ttk.Label(frame, text="Автор потока", font=("Arial", 10))
-        label_author.pack(pady=10)
+        # src_cd_entry = ttk.Entry(frame, textvariable=self.out_path, font=("Arial", 10))
+        # src_cd_entry.config(state=tk.DISABLED)
+        # src_cd_entry.pack(fill=tk.X, padx=25)
 
-        author_entry = ttk.Entry(frame, textvariable=self.author, font=("Arial", 10))
-        author_entry.pack(fill=tk.X, padx=25)
+        # label_author = ttk.Label(frame, text="Автор потока", font=("Arial", 10))
+        # label_author.pack(pady=10)
+        #
+        # author_entry = ttk.Entry(frame, textvariable=self.author, font=("Arial", 10))
+        # author_entry.pack(fill=tk.X, padx=25)
 
         # Дополнительная информация
         text_info: str = (f'Конфиг:  {Conf.config_file}\n'
                           f'Шаблоны: {Conf.templates_path}\n'
+                          '\n'
+                          f'Каталог: {Conf.out_path}\n'
                           f'Журнал:  {Conf.log_file}\n'
+                          f'Автор:   {author}\n'
                           )
         self.info_text = tk.StringVar(value=text_info)
-        label_info = tk.Text(frame, font=("Courier New", 9), height=5)
+        label_info = tk.Text(frame, font=("Courier New", 9), height=6)
         label_info.insert(index=tk.END, chars=text_info)
         label_info.configure(state=tk.DISABLED)
         label_info.pack(fill=tk.X, padx=25, pady=10)
@@ -108,16 +112,19 @@ class MainWindow(tk.Tk):
         exit_button.grid(row=0, column=2, sticky=tk.E, padx=10)
 
     def _setup_file_path(self):
-        self.file_path.set(filedialog.askopenfilename())
+        initial_dir: str = Conf.out_path
+        filetypes = [('Excel files', '*.xls'), ('Excel files', '*.xlsx'), ('All files', '*.*')]
+        title = "Выбор файла"
+
+        file_path: str = filedialog.askopenfilename(filetypes=filetypes, initialdir=initial_dir, title=title)
+        if file_path:
+            self.file_path.set(file_path)
 
     @staticmethod
     def _view_log():
-        log_file: str = Conf.log_file
-        log_viewer: str = Conf.config.get('log_viewer')
-        log_file_cmd: str = Conf.config.get('log_file_cmd').replace('{log_file}', f'{log_file}')
-        log_cmd: str = f'"{log_viewer} {log_file_cmd}"'
-        print(log_cmd)
-        os.system(log_cmd)
+        # print(Conf.log_viewer)
+        # os.system(Conf.log_viewer)
+        subprocess.Popen(args=Conf.log_viewer)
 
     def _export_mapping(self):
         msg: str
@@ -128,8 +135,8 @@ class MainWindow(tk.Tk):
 
         if not all((
                 self.file_path.get(),
-                self.out_path.get(),
-                self.author.get(),
+                # self.out_path.get(),
+                # self.author.get(),
                 )):
             showerror("Ошибка", "Проверьте заполнение полей формы")
         else:
@@ -139,27 +146,31 @@ class MainWindow(tk.Tk):
 
                 mapping_generator(
                     file_path=self.file_path.get(),
-                    out_path=os.path.abspath(self.out_path.get()),
+                    out_path=Conf.out_path,
                     env=self.env,
                     author=self.author.get()
                 )
 
-                if Conf.is_warning:
-                    msg = ("Файлы потоков сформированы.\n"
+                if Conf.is_error:
+                    msg = ("Во время обработки были ошибки.\n"
+                           "Прочитайте описание ошибок (error) "
+                           "в журнале работы программы!")
+                    showerror("Ошибка", msg)
+                    logging.info("Обработка завершена с ошибками")
+
+                elif Conf.is_warning:
+                    msg = ("Обработка завершена c предупреждениями.\n"
                            "Прочитайте предупреждения (warning) "
-                           "в журнале работы программы!")
+                           "в журнале работы программы.")
                     showwarning("Предупреждение", msg)
-                    logging.info("Файлы потоков сформированы с 'предупреждениями'")
-                elif Conf.is_error:
-                    msg = ("Возможно часть потоков не сформирована.\n"
-                           "Прочитайте ошибки (error) "
-                           "в журнале работы программы!")
-                    showwarning("Предупреждение", msg)
-                    logging.info("Файлы потоков сформированы с 'ошибками'")
+                    logging.info("Обработка завершена с предупреждениями")
+
                 else:
-                    msg = "Файлы потоков сформированы"
+                    msg = ("Обработка завершена без ошибок.\n"
+                           "Для получения подробной информации о сформированных потоках\n"
+                           "прочитайте журнал работы программы.")
                     showinfo("Успешно", msg)
-                    logging.info(msg)
+                    logging.info('Обработка завершена без ошибок')
 
             except (exp.IncorrectMappingException, ValueError) as err:
                 logging.error(err)

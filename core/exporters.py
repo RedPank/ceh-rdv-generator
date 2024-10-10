@@ -80,7 +80,7 @@ class SourceObjectExporter:
 
 
 class TargetObjectExporter:
-    tgt_ctx: TargetContext
+    target_context: TargetContext
     uni_ctx: UniContext
     env: Environment
 
@@ -92,9 +92,9 @@ class TargetObjectExporter:
     template_hub_json: str = 'ceh.hub_table.json '      # Название шаблона ресурса хаб-таблицы
     template_bk_json: str = 'ceh_bk_schema.json'        # Название шаблона ресурса БК-схемы хаб-таблицы
 
-    def __init__(self, env, ctx, uni_ctx):
+    def __init__(self, env, target_context, uni_ctx):
         self.env = env
-        self.tgt_ctx = ctx
+        self.target_context = target_context
         self.uni_ctx = uni_ctx
 
     def export_yaml(self, path):
@@ -105,19 +105,19 @@ class TargetObjectExporter:
 
         Returns: None
         """
-        values: dict = {'src_cd': self.tgt_ctx.src_cd}
+        values: dict = {'src_cd': self.target_context.src_cd}
 
         os.makedirs(path, exist_ok=True)
 
         # Файл описания март-таблицы
         template = self.env.get_template(self.template_name_yaml)
-        output = template.render(ctx=self.tgt_ctx, uni_ctx=self.uni_ctx)
-        file_name: str = os.path.join(path, self.tgt_ctx.name + '.yaml')
+        output = template.render(ctx=self.target_context, uni_ctx=self.uni_ctx)
+        file_name: str = os.path.join(path, self.target_context.name + '.yaml')
         with open(file_name, "w", encoding="utf-8") as f:
             f.write(output)
 
         # Файлы описания хаб-таблиц
-        for hub in self.tgt_ctx.hub_ctx_list:
+        for hub in self.target_context.hub_ctx_list:
             template = self.env.get_template(self.template_hub_yaml)
             output = template.render(hub=hub, values=values)
             file_name: str = os.path.join(path, f'{hub.hub_name_only}.yaml')
@@ -127,7 +127,7 @@ class TargetObjectExporter:
     def export_hub_sql(self, path):
         os.makedirs(path, exist_ok=True)
         # Файлы описания хаб-таблиц
-        for hub in self.tgt_ctx.hub_ctx_list:
+        for hub in self.target_context.hub_ctx_list:
             # Создание/заполнение хаб-таблиц
             template = self.env.get_template(self.template_hub_create_sql)
             output = template.render(hub=hub)
@@ -139,8 +139,8 @@ class TargetObjectExporter:
         os.makedirs(path, exist_ok=True)
 
         template = self.env.get_template(self.template_name_sql)
-        output = template.render(ctx=self.tgt_ctx)
-        file_name: str = os.path.join(path, '01-' + self.tgt_ctx.name + '.sql')
+        output = template.render(ctx=self.target_context)
+        file_name: str = os.path.join(path, '01-' + self.target_context.name + '.sql')
         with open(file_name, "w", encoding="utf-8") as f:
             f.write(output)
 
@@ -158,7 +158,7 @@ class TargetObjectExporter:
         """
         os.makedirs(path, exist_ok=True)
         template = self.env.get_template('f_gen_access_view.sql')
-        output = template.render(ctx=self.tgt_ctx)
+        output = template.render(ctx=self.target_context)
         file_name: str = os.path.join(path, 'f_gen_access_view.sql')
         with open(file_name, "w", encoding="utf-8") as f:
             f.write(output)
@@ -170,18 +170,18 @@ class TargetObjectExporter:
         tags_val = {}
         tags: list = _get_tags_list(tags_tmpl=Conf.resource_tags, tags_val=tags_val)
 
-        actual_dttm: str = f"{self.tgt_ctx.src_cd}_actual_dttm".lower()
+        actual_dttm: str = f"{self.target_context.src_cd}_actual_dttm".lower()
         # Словарь с доп. параметрами для шаблона
         values: dict = {"actual_dttm_name": actual_dttm}
 
         # Ресурс целевой mart - таблицы
         template = self.env.get_template(self.template_name_json)
-        output = template.render(ctx=self.tgt_ctx, uni_ctx=self.uni_ctx, values=values, tags=tags)
-        file_name: str = os.path.join(path, f'ceh.{self.tgt_ctx.schema}.{self.tgt_ctx.name}.json')
+        output = template.render(ctx=self.target_context, uni_ctx=self.uni_ctx, values=values, tags=tags)
+        file_name: str = os.path.join(path, f'ceh.{self.target_context.schema}.{self.target_context.name}.json')
         with open(file_name, "w", encoding="utf-8") as f:
             f.write(output)
 
-        for hub in self.tgt_ctx.hub_ctx_list:
+        for hub in self.target_context.hub_ctx_list:
             # Ресурс хаб-таблицы
             template = self.env.get_template(self.template_hub_json)
             output = template.render(hub=hub, values=values, tags=tags)
@@ -268,16 +268,17 @@ class MartPackExporter:
         self.path = path
 
         # Данные для формирования секции "tags""
-        tags_val = {'src_cd': self.exp_obj.mapping_ctx.src_cd, 'src_tbl': self.exp_obj.src_ctx.name,
+        tags_val = {'src_cd': self.exp_obj.mapping_ctx.src_cd, 'src_tbl': self.exp_obj.source_context.name,
                     'prv': self.exp_obj.mapping_ctx.source_system,
-                    'tgt': self.exp_obj.tgt_ctx.schema, 'tgt_tbl': self.exp_obj.tgt_ctx.name,
+                    'tgt': self.exp_obj.target_context.schema, 'tgt_tbl': self.exp_obj.target_context.name,
                     'cf_flow': 'cf_' + self.exp_obj.mapping_ctx.work_flow_name,
                     'wf_flow': 'wf_' + self.exp_obj.mapping_ctx.work_flow_name, 'alg': self.exp_obj.mapping_ctx.algo}
 
         self.tags: list = _get_tags_list(tags_tmpl=Conf.tags, tags_val=tags_val)
 
-        self._src_exporter = SourceObjectExporter(env, self.exp_obj.src_ctx, self.exp_obj.uni_ctx)
-        self._tgt_exporter = TargetObjectExporter(env=env, ctx=self.exp_obj.tgt_ctx, uni_ctx=self.exp_obj.uni_ctx)
+        self._src_exporter = SourceObjectExporter(env, self.exp_obj.source_context, self.exp_obj.uni_ctx)
+        self._tgt_exporter = TargetObjectExporter(env=env, target_context=self.exp_obj.target_context,
+                                                  uni_ctx=self.exp_obj.uni_ctx)
         self._mapping_exporter = MappingObjectExporter(env=env, ctx=self.exp_obj.mapping_ctx, author=author,
                                                        uni_ctx=self.exp_obj.uni_ctx, tags=self.tags)
 

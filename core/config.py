@@ -14,7 +14,11 @@ class Config:
     setting_up_field_lists: dict
     field_type_list: dict
     excel_data_definition: dict
+    out_path: str
     log_file: str
+    author: str
+    log_viewer: list
+    log_file_cmd: str
     env: any
     templates_path: str
     excel_file: str
@@ -42,6 +46,7 @@ class Config:
         Config.excel_data_definition = Config.config.get('excel_data_definition', dict())
 
         Config.excel_file = Config.config.get('excel_file', '')
+        Config.author = Config.config.get('author', 'Unknown Author')
 
         # "Загрузка" файлов-шаблонов
         Config.templates_path = os.path.abspath(Config.config.get('templates', 'templates'))
@@ -52,16 +57,34 @@ class Config:
 
         Config.env = Environment(loader=FileSystemLoader(Config.templates_path))
 
+        # Каталог для формирования подкаталогов с файлами потоков
+        out_path: str = Config.config.get('out_path', '')
+        out_path = out_path.strip()
+        out_path = 'AFlows' if not out_path else out_path
+        out_path = os.path.abspath(out_path) if not os.path.isabs(out_path) else out_path
+        if not os.path.exists(out_path):
+            raise FileExistsError(f'Каталог "{out_path}" не существует')
+        if not os.path.isdir(out_path):
+            raise FileExistsError(f'Объект "{out_path}" не является каталогом')
+        Config.out_path = out_path
+
         # Файл журнала
-        log_file: str = Config.config.get('log_file', 'generator.log')
+        log_file: str = Config.config.get('log_file', '')
         log_file = log_file.strip()
         log_file = 'generator.log' if not log_file else log_file
-        Config.log_file = os.path.join(Path(__file__).parents[1], log_file)
-        if os.path.exists(Config.log_file):
-            if os.path.isfile(Config.log_file):
-                os.remove(Config.log_file)
+        log_file = os.path.join(Config.out_path, log_file) if not os.path.isabs(log_file) else log_file
+
+        if os.path.exists(log_file):
+            if os.path.isfile(log_file):
+                os.remove(log_file)
             else:
                 raise FileExistsError(f'Объект "{Config.log_file}" не является файлом')
+        Config.log_file = log_file
+
+        Config.log_viewer = Config.config.get('log_viewer')
+        Config.log_viewer = [arg.replace('{log_file}', f'{Config.log_file}') for arg in Config.log_viewer]
+
+        print(Config.log_viewer)
 
     @staticmethod
     def get_regexp(name: str) -> str:

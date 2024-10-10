@@ -5,7 +5,8 @@ from pandas import DataFrame
 
 from core.exceptions import IncorrectMappingException
 from core.exporters import MartPackExporter
-from core.mapping import MappingMeta, MartMapping, StreamData
+from core.mapping import MappingMeta, MartMapping
+from core.stream_header_data import StreamHeaderData
 import logging
 from core.config import Config as Conf
 import re
@@ -24,7 +25,6 @@ def mapping_generator(
     Args:
         file_path (str): Полный путь к файлу маппинга РДВ
         out_path (str): Каталог, в котором будут сформированы подкаталоги с описанием потоков
-        load_mode (str): Режим загрузки (increment, snapshot) - Удален
         env (Environment): Окружение шаблонов jinja2
         author (str): Наименование автора потоков для заполнения в шаблоне
     """
@@ -34,8 +34,6 @@ def mapping_generator(
 
     logging.info(f"file_path: {file_path}")
     logging.info(f"out_path: {out_path}")
-    #  logging.info(f"load_mode: {load_mode}")
-    # logging.info(f"source_system: {source_system}")
     logging.info(f"author: {author}")
 
     logging.info(f'Чтение данных из файла "{file_path}"')
@@ -72,24 +70,39 @@ def mapping_generator(
         if not re.match(pattern, tgt_table):
             logging.error(f'Имя целевой таблицы "{tgt_table}" на листе "Перечень загрузок Src-RDV" '
                           f'не соответствует шаблону "{pattern}"')
-            # raise IncorrectMappingException("Имя целевой таблицы не определено")
             Conf.is_error = True
             continue
 
         # Данные "Перечень загрузок Src-RDV" листа для таблицы
-        stream_data: StreamData = StreamData(df=mapping_meta.mapping_list, tgt_table=tgt_table)
+        stream_header_data: StreamHeaderData = StreamHeaderData(df=mapping_meta.mapping_list, tgt_table=tgt_table)
+
+        if not stream_header_data.base_flow_name:
+            logging.error(f'Для таблицы {tgt_table} неверно задано/не задано поле "Название потока"/Flow_name ')
+            raise IncorrectMappingException("Имя потока не определено")
+        logging.info(f'flow_name = {stream_header_data.flow_name}')
+
+        # Фильтр по шаблону имени потока из файла конфигурации
+        if not [True for pattern in wf_templates_list if re.match(pattern, stream_header_data.flow_name)]:
+            logging.info(f'Поток "{stream_header_data.flow_name}" обрабатываться не будет, т.к. не соответствует ни '
+                         f'одному из шаблонов в файле конфигурации')
+            continue
+
+        if stream_header_data.version_end:
+            logging.info(f'Версия "{stream_header_data.version_end}" потока "{stream_header_data.flow_name}" '
+                         f'обрабатываться не будет')
+            continue
 
         # Проверяем таблицу-источник
-        src_table: str | None = stream_data.src_table
+        # src_table: str | None = stream_header_data.src_table
         pattern: str = Conf.get_regexp('src_table_name_regexp')
-        if not re.match(pattern, src_table):
-            logging.error(f'Имя таблицы-источника "{src_table}" на листе "Перечень загрузок Src-RDV" '
+        if not re.match(pattern, stream_header_data.src_table):
+            logging.error(f'Имя таблицы-источника "{stream_header_data.src_table}" на листе "Перечень загрузок Src-RDV" '
                           f'не соответствует шаблону "{pattern}"')
             # raise IncorrectMappingException("Имя таблицы-источника не определено")
             Conf.is_error = True
             continue
 
-        logging.info(f'src_table = {src_table}')
+        logging.info(f'src_table = {stream_header_data.src_table}')
 
         # Данные для заданной целевой таблицы
         mapping: DataFrame = mapping_meta.get_mapping_by_table(tgt_table)
@@ -105,33 +118,16 @@ def mapping_generator(
 
         logging.info(f'src_cd = {src_cd}')
 
-        # Имя потока без wf_/cf_
-        flow_name: str | None = stream_data.flow_name
-
-        base_flow_name = flow_name.removeprefix('wf_')
-        if not base_flow_name:
-            logging.error(f'Для таблицы {tgt_table} неверно задано/не задано поле "Название потока"/Flow_name ')
-            raise IncorrectMappingException("Имя потока не определено")
-        logging.info(f'flow_name = {flow_name}')
-
-        # Фильтр по шаблону имени потока из файла конфигурации
-        if not [True for pattern in wf_templates_list if re.match(pattern, flow_name)]:
-            logging.info(f'Поток "{flow_name}" обрабатываться не будет, т.к. не соответствует ни одному из шаблонов '
-                         f'в файле конфигурации')
-            continue
-
         # Имя источника - Source_name
-        source_name: str = stream_data.source_name.upper()
-        if not base_flow_name:
+        if not stream_header_data.source_system:
             logging.error(f'Для таблицы {tgt_table} неверно задано/не задано поле "Источник данных'
                           f' (транспорт)"/Source_name')
-            # raise IncorrectMappingException("Поле 'Source_name' не определено")
             Conf.is_error = True
             continue
-        logging.info(f'source_name = {source_name}')
+        logging.info(f'source_name = {stream_header_data.source_system}')
 
         # Алгоритм - Algorithm_UID
-        algorithm_uid: str = stream_data.algorithm_uid
+        algorithm_uid: str = stream_header_data.algorithm_uid
         if not algorithm_uid:
             logging.error(f'Для таблицы {tgt_table} неверно задано/не задано поле "UID алгоритма"/"Algorithm_UID"')
             # raise IncorrectMappingException("Поле 'Algorithm_UID' не определено")
@@ -140,10 +136,10 @@ def mapping_generator(
         logging.info(f'algorithm_uid = {algorithm_uid}')
 
         # Название схемы таблицы (берется из названия таблицы src_table)
-        source_system_schema: str | None = src_table.split('.')[0]
+        source_system_schema: str | None = stream_header_data.src_table.split('.')[0]
         if not source_system_schema:
             logging.error(f'На листе "Перечень загрузок Src-RDV" '
-                          f'неверно задано/не задано имя схемы источника в имени таблицы "{src_table}"')
+                          f'неверно задано/не задано имя схемы источника в имени таблицы "{stream_header_data.src_table}"')
             # raise IncorrectMappingException("Имя схемы источника не определено")
             Conf.is_error = True
             continue
@@ -154,14 +150,13 @@ def mapping_generator(
             mart_mapping=mapping,
             src_cd=src_cd,
             data_capture_mode='increment',
-            source_system=source_name,
-            work_flow_name=base_flow_name,
+            stream_header_data=stream_header_data,
             source_system_schema=source_system_schema
         )
 
         # Каталог для файлов
-        out_path_tbl = os.path.join(out_path, tgt_table)
-        logging.info(f'Каталог потока {base_flow_name}: {out_path_tbl}')
+        out_path_tbl = os.path.join(out_path, stream_header_data.flow_name)
+        logging.info(f'Каталог потока {stream_header_data.base_flow_name}: {out_path_tbl}')
 
         # Объект для формирования данных для вывода в файлы
         mp_exporter = MartPackExporter(
@@ -172,7 +167,7 @@ def mapping_generator(
 
         # Вывод данных в файлы
         mp_exporter.load()
-        logging.info(f'Файлы потока {base_flow_name} сформированы')
+        logging.info(f'Файлы потока {stream_header_data.base_flow_name} сформированы')
 
     if Conf.is_error:
         logging.error(f'Один или более потоков не были сформированы из-за обнаруженных ошибок')

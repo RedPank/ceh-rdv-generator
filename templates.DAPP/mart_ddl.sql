@@ -9,10 +9,10 @@ CREATE TABLE {{ ctx.schema }}.{{ ctx.name }} (
 {%- endfor %}
 )
 WITH (
- appendonly=true,
- orientation=column,
- compresstype=zstd,
- compresslevel=1
+  appendoptimized=true,
+  orientation=column,
+  compresslevel=1,
+  compresstype=zstd
 )
 DISTRIBUTED BY ({{ ctx.distributed_by }});
 

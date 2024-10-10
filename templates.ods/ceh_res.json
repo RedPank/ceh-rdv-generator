@@ -9,6 +9,8 @@
 {%- endif %}
     ],
     "features": {"domain": "{{ ctx.schema.upper() }}", "source_system": "{{ ctx.src_cd.upper() }}"},
+    "is_readonly": false,
+	"is_deleted": false,
     "datasets": [
         {
             "name": "{{ ctx.name }}",
@@ -27,7 +29,6 @@
             ]
         }
     ],
-    "is_readonly": false,
      "metrics": {
         "{{values.actual_dttm_name}}": {
         "id": "ceh.{{ ctx.schema }}.{{ ctx.name }}:{{values.actual_dttm_name}}",
