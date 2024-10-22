@@ -21,7 +21,7 @@
               {
                 "name": {{ col.name }},
                 "type": {{ col.datatype }},
-                "nullable": {{ col.is_nullable }},
+                "nullable": {%- if col.is_nullable %} true {% else %} false {% endif %},
                 "primary_key": {%- if col.pk == 'pk'%} True {% else %} False {% endif %}
               }{%- if not loop.last -%},{% endif -%}
 {%- endfor %}

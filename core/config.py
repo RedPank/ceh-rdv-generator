@@ -1,12 +1,17 @@
 import logging
+import os
+
 import yaml
 from jinja2 import Environment, FileSystemLoader
-import os
-from pathlib import Path
+
 from core.exceptions import IncorrectConfigException
 
 
 class Config:
+    """
+    Читает конфигурационный файл программы.
+    Предоставляет доступ другим модулям программы к общим настройкам.
+    """
     # Declare the static variables
     config: any
     tags: any
@@ -28,6 +33,14 @@ class Config:
 
     @staticmethod
     def load_config(config_name: str):
+        """
+        Выполняет считывание и обработку указанного в параметре конфигурационного файла.
+        Args:
+            config_name: Полное имя, с указанием каталога, конфигурационного файла программы
+
+        Returns: None
+
+        """
 
         if not os.path.exists(config_name):
             msg = f'Не найден файл конфигурации программы "{config_name}"'
@@ -88,6 +101,15 @@ class Config:
 
     @staticmethod
     def get_regexp(name: str) -> str:
+        """
+        Возвращает регулярное выражение, которое зарегистрировано в конфигурационном файле под указанным именем.
+        В случае отсутствия указанного имени возбуждается исключение IncorrectConfigException.
+        Args:
+            name: Имя регулярного выражения.
+
+        Returns: Регулярное выражение в виде строки.
+
+        """
         if name in Config.config:
             return Config.config.get(name)
         else:

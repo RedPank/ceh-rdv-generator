@@ -68,10 +68,10 @@ def _generate_mapping_df(file_data: bytes, sheet_name: str):
 
             else:
                 logging.error(f"Колонка '{col_name}' не найдена на листе '{sheet_name}'")
-                logging.error("Список допустимых имен колонок:")
-                logging.error(columns_list)
-                logging.error("Список колонок на листе EXCEL:")
-                logging.error(mapping.columns.values)
+                logging.info("Список допустимых имен колонок:")
+                logging.info(columns_list)
+                # logging.info("Список колонок на листе EXCEL:")
+                # logging.info(mapping.columns.values)
                 error = True
 
     if error:
@@ -151,23 +151,26 @@ class MappingMeta:
         self.mapping_df = self.mapping_df.query("version_end == ''")
 
         # Преобразуем значения в "нужный" регистр
+        self.mapping_df['src_attr'] = self.mapping_df['src_attr'].fillna(value="")
         self.mapping_df['src_attr'] = self.mapping_df['src_attr'].str.lower()
         self.mapping_df['src_attr'] = self.mapping_df['src_attr'].str.strip()
 
+        self.mapping_df['src_attr_datatype'] = self.mapping_df['src_attr_datatype'].fillna(value="")
         self.mapping_df['src_attr_datatype'] = self.mapping_df['src_attr_datatype'].str.lower()
         self.mapping_df['src_attr_datatype'] = self.mapping_df['src_attr_datatype'].str.strip()
 
+        self.mapping_df['tgt_attribute'] = self.mapping_df['tgt_attribute'].fillna(value="")
         self.mapping_df['tgt_attribute'] = self.mapping_df['tgt_attribute'].str.lower()
         self.mapping_df['tgt_attribute'] = self.mapping_df['tgt_attribute'].str.strip()
 
+        self.mapping_df['tgt_attr_datatype'] = self.mapping_df['tgt_attr_datatype'].fillna(value="")
         self.mapping_df['tgt_attr_datatype'] = self.mapping_df['tgt_attr_datatype'].str.lower()
         self.mapping_df['tgt_attr_datatype'] = self.mapping_df['tgt_attr_datatype'].str.strip()
 
-        self.mapping_df['tgt_pk'] = self.mapping_df['tgt_pk'].str.lower()
-        self.mapping_df['tgt_pk'] = self.mapping_df['tgt_pk'].str.strip()
-
         # Заменяем значения NaN на пустые строки, что-бы дальше "не мучится"
         self.mapping_df['tgt_pk'] = self.mapping_df['tgt_pk'].fillna(value="")
+        self.mapping_df['tgt_pk'] = self.mapping_df['tgt_pk'].str.lower()
+        self.mapping_df['tgt_pk'] = self.mapping_df['tgt_pk'].str.strip()
 
         # Проверяем состав поля 'tgt_pk'
         err_rows: pd.DataFrame = self.mapping_df[~self.mapping_df['tgt_pk'].apply(test_tgt_pk)]

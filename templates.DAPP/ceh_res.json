@@ -19,10 +19,10 @@
 {%- if ctx.field_ctx_list|length > 0 %}
 {%- for col in ctx.field_ctx_list %}
               {
-                "name": {{ col.name }},
-                "type": {{ col.datatype }},
-                "nullable": {{ col.is_nullable }},
-                "primary_key": {%- if col.pk == 'pk'%} True {% else %} False {% endif %}
+                "name": "{{ col.name }}",
+                "type": "{{ col.datatype }}",
+                "nullable": {%- if col.is_nullable %} true {% else %} false {% endif %},
+                "primary_key": {%- if col.pk == 'pk'%} true {% else %} false {% endif %}
               }{%- if not loop.last -%},{% endif -%}
 {%- endfor %}
 {%- endif %}

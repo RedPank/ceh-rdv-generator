@@ -7,16 +7,16 @@ columns:
     type: BIGINT
     nullable: false
   - name: {{ hub.hub_field }}
-    type: VARCHAR
+    type: TEXT
     nullable: false
   - name: src_cd
-    type: VARCHAR
+    type: TEXT
     nullable: false
   - name: bk_type
-    type: VARCHAR
+    type: TEXT
     nullable: false
   - name: invalid_id
-    type: BIGINT
+    type: TEXT
     nullable: false
   - name: version_id
     type: BIGINT

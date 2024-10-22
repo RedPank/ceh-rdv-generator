@@ -1,4 +1,3 @@
-import os
 import subprocess
 import tkinter as tk
 from tkinter import ttk, SOLID
@@ -18,8 +17,6 @@ class MainWindow(tk.Tk):
         super().__init__()
 
         author: str = Conf.author
-        # out_path: str = Conf.out_path
-        # self.out_path = tk.StringVar(value=out_path)
         self.file_path = tk.StringVar(value=Conf.excel_file)
         self.author = tk.StringVar(value=author)
 
@@ -29,9 +26,9 @@ class MainWindow(tk.Tk):
         # self.geometry("500x500")
 
         frame = tk.Frame(
-            self,       # Обязательный параметр, который указывает окно для размещения Frame.
-            padx=5,     # Задаём отступ по горизонтали.
-            pady=5,     # Задаём отступ по вертикали.
+            self,    # Обязательный параметр, который указывает окно для размещения Frame.
+            padx=5,  # Задаём отступ по горизонтали.
+            pady=5,  # Задаём отступ по вертикали.
             borderwidth=1,
             relief=SOLID
         )
@@ -51,19 +48,6 @@ class MainWindow(tk.Tk):
         )
         open_file_dialog_button.pack(fill=tk.X, padx=25, pady=0)
 
-        # label_src_cd = ttk.Label(frame, text="Путь для размещения каталога(ов) потока(ов)", font=("Arial", 10))
-        # label_src_cd.pack(pady=10)
-
-        # src_cd_entry = ttk.Entry(frame, textvariable=self.out_path, font=("Arial", 10))
-        # src_cd_entry.config(state=tk.DISABLED)
-        # src_cd_entry.pack(fill=tk.X, padx=25)
-
-        # label_author = ttk.Label(frame, text="Автор потока", font=("Arial", 10))
-        # label_author.pack(pady=10)
-        #
-        # author_entry = ttk.Entry(frame, textvariable=self.author, font=("Arial", 10))
-        # author_entry.pack(fill=tk.X, padx=25)
-
         # Дополнительная информация
         text_info: str = (f'Конфиг:  {Conf.config_file}\n'
                           f'Шаблоны: {Conf.templates_path}\n'
@@ -79,9 +63,9 @@ class MainWindow(tk.Tk):
         label_info.pack(fill=tk.X, padx=25, pady=10)
 
         # Фрейм кнопок
-        frame_key = tk.Frame(frame,     # Обязательный параметр, который указывает окно для размещения Frame.
-                             padx=5,    # Задаём отступ по горизонтали.
-                             pady=5,    # Задаём отступ по вертикали.
+        frame_key = tk.Frame(frame,  # Обязательный параметр, который указывает окно для размещения Frame.
+                             padx=5,  # Задаём отступ по горизонтали.
+                             pady=5,  # Задаём отступ по вертикали.
                              borderwidth=0,
                              relief=SOLID
                              )
@@ -122,8 +106,6 @@ class MainWindow(tk.Tk):
 
     @staticmethod
     def _view_log():
-        # print(Conf.log_viewer)
-        # os.system(Conf.log_viewer)
         subprocess.Popen(args=Conf.log_viewer)
 
     def _export_mapping(self):
@@ -137,7 +119,7 @@ class MainWindow(tk.Tk):
                 self.file_path.get(),
                 # self.out_path.get(),
                 # self.author.get(),
-                )):
+        )):
             showerror("Ошибка", "Проверьте заполнение полей формы")
         else:
             try:
@@ -181,4 +163,3 @@ class MainWindow(tk.Tk):
                 msg = "Ошибка чтения шаблона.\nПроверьте журнал работы программы."
                 logging.exception("Ошибка чтения шаблона")
                 showerror(title="Ошибка", message=msg)
-
