@@ -1,6 +1,7 @@
 import random
 import string
 
+import numpy as np
 import pandas
 import pandas as pd
 import re
@@ -342,9 +343,13 @@ class MartMapping:
 
         is_error: bool = False
 
-        src = self.mart_mapping[['src_table', 'src_attr', 'src_attr_datatype']].dropna(how='all')
-        tgt = self.mart_mapping[['tgt_attribute', 'tgt_attr_datatype', 'tgt_attr_mandatory', 'tgt_pk', 'comment',
-                                 '_pk', '_rk']].dropna(subset=['tgt_attribute', 'tgt_attr_datatype'])
+        src = (self.mart_mapping[['src_table', 'src_attr', 'src_attr_datatype']])
+        # Удаляем строки в которых поле 'src_table' состоит из пробелов или "пустая строка"
+        src = src[src['src_table'].str.strip() != '']
+        src = src.dropna(subset=['src_table'])
+
+        tgt = (self.mart_mapping[['tgt_attribute', 'tgt_attr_datatype', 'tgt_attr_mandatory', 'tgt_pk', 'comment',
+                                 '_pk', '_rk']].dropna(subset=['tgt_attribute', 'tgt_attr_datatype']))
 
         # Проверяем типы данных, заданные для источника. Читаем данные из настроек программы
         src_attr_datatype: dict = Config.field_type_list.get('src_attr_datatype', dict())
@@ -374,6 +379,10 @@ class MartMapping:
             # Удаляем строки для которых не заполнены поля источника и/или целевой таблицы.
             data_types = self.mart_mapping[['src_attr', 'src_attr_datatype',
                                             'tgt_attribute', 'tgt_attr_datatype']].dropna(how='any')
+            data_types = data_types[(data_types['src_attr'].str.strip() != '') &
+                                    (data_types['src_attr_datatype'].str.strip() != '')]
+            data_types = data_types.dropna(how='any')
+
             # Проверяем соответствие типов данных источника и целевой таблицы.
             tmp_df = data_types.apply(func=check_datatypes, axis=1, result_type='reduce')
             err_rows = data_types[~tmp_df]
@@ -554,7 +563,7 @@ class MartMapping:
         Возвращает список полей источника с типами данных
         """
         src_attr: DataFrame = self.mart_mapping[['src_attr', 'src_attr_datatype', 'src_table']] \
-            .dropna(how="any")
+            .replace('', np.nan).dropna(how="any")
 
         src_tbl_name: str = src_attr.iloc[0]['src_table']
 
@@ -569,6 +578,7 @@ class MartMapping:
             logging.error(f"Названия полей в таблице - источнике '{src_tbl_name}' не соответствуют шаблону '{pattern}'")
             for index, fld_name in err_rows['src_attr'].items():
                 logging.error(fld_name)
+                logging.error(type(fld_name))
             is_error = True
 
         # Проверяем обязательные поля таблицы - источника
@@ -618,11 +628,18 @@ class MartMapping:
             ['expression', 'tgt_attribute', 'tgt_attr_datatype']
         ].dropna().to_numpy().tolist()
 
+        is_warning = False
         for lst in mart_map_exp:
             if not lst[0].startswith('='):
-                logging.warning(f'Значение в колонке "Expression" должно начинаться со знака равно. src_attr={lst[1]}')
+                logging.warning(f'Значение в колонке "Expression" ({lst[0]}) '
+                                f'должно начинаться с "=". Поле целевой таблицы: "{lst[1]}"')
+                is_warning = True
             else:
                 mart_map.append([None, lst[1], lst[2], None, lst[0]])
+
+        if is_warning:
+            logging.warning("Внимание! В EXCEL в строке ввода перед знаком '=' должна стоять одинарная кавычка."
+                            " Иначе ячейка распознается как формула, а не как текст.")
 
         return mart_map
 
